@@ -1,0 +1,204 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>板块量价读数 2026-11-26</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:14px/1.55 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;background:#f6f7f9;color:#1f2328;padding:20px 16px 60px}
+.wrap{max-width:1180px;margin:0 auto;min-width:0}
+header{margin-bottom:18px}
+h1{font-size:22px;font-weight:650;letter-spacing:-.3px}
+.sub{color:#6b7280;font-size:13px;margin-top:4px;line-height:1.7}
+.mkt{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.pill{background:#fff;border:1px solid #e5e7eb;border-radius:99px;padding:5px 12px;font-size:12.5px;color:#374151}
+.pill b{font-weight:600}
+.board{background:#fff;border:1px solid #e5e7eb;border-radius:10px;margin-bottom:16px;overflow:hidden;min-width:0}
+.bhead{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #f0f1f3;border-left:3px solid var(--c);flex-wrap:wrap}
+.bhead h2{font-size:16px;font-weight:650}
+.tag{font-size:11.5px;color:#6b7280;background:#f3f4f6;padding:2px 8px;border-radius:5px}
+.bstat{margin-left:auto;font-size:12px;color:#9ca3af}
+.layer{padding:12px 16px 6px;overflow-x:auto}
+.layer+.layer{border-top:1px dashed #eef0f2}
+.layer h3{font-size:14px;font-weight:600;margin-bottom:8px}
+.layer h3 small{font-size:11.5px;color:#9ca3af;font-weight:400;margin-left:6px}
+.note{font-size:11.5px;color:#9ca3af;margin:-3px 0 9px;line-height:1.75}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th{text-align:left;color:#9ca3af;font-weight:500;font-size:11.5px;padding:6px;border-bottom:1px solid #eef0f2;white-space:nowrap;user-select:none}
+th[data-k]{cursor:pointer}
+th[data-k]:hover{color:#2b5fd9;background:#f5f9ff}
+th.sorted{color:#2b5fd9;background:#eef4ff}
+td{padding:7px 6px;border-bottom:1px solid #f7f8f9;white-space:nowrap}
+td.r,th.r{text-align:right}
+tbody tr:hover{background:#fafbfc}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:#6b7280;font-size:11.5px}
+.sg{color:#6b7280;font-size:11.5px}
+.up{color:#dc2626}.dn{color:#16a34a}
+.na{color:#d1d5db}
+.empty{color:#9ca3af;font-size:12px;padding:8px 0 12px}
+.hb{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+.hbn{width:118px;font-size:12px;color:#374151;flex:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hbt{flex:1;height:11px;background:#f3f4f6;border-radius:2px;overflow:hidden;min-width:0}
+.hbf{height:100%;border-radius:2px}
+.hbv{width:66px;text-align:right;font-size:11.5px;font-variant-numeric:tabular-nums;flex:none}
+footer{color:#9ca3af;font-size:11.5px;margin-top:26px;line-height:1.9;border-top:1px solid #e5e7eb;padding-top:14px}
+footer .fh{color:#6b7280;font-size:11.5px;font-weight:600;margin:11px 0 3px}
+footer .fh:first-child{margin-top:0}
+footer .fz{color:#9ca3af}
+footer b{color:#6b7280;font-weight:600}
+@media(max-width:640px){body{padding:14px 10px 40px}table{font-size:11.5px}th,td{padding:5px 3px}.hbn{width:86px}}
+</style><style>
+.brief{background:#fff;border:1px solid #dbe3f0;border-left:4px solid #2b5fd9;border-radius:10px;margin:12px 0 16px;overflow:hidden;min-width:0}
+.brief .bh{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:11px 14px;background:linear-gradient(90deg,#f1f6ff,#fff);border-bottom:1px solid #eef0f3}
+.brief .bh h2{font-size:14.5px;color:#1e3a8a;font-weight:700;margin:0}
+.brief .bh span{font-size:11px;color:#6b7280}
+.bs{padding:9px 14px 11px}
+.bs+.bs{border-top:1px dashed #e5e7eb}
+.bst{font-size:12px;font-weight:650;color:#374151;margin-bottom:7px}
+.bst b{color:#b91c1c}
+.bi{position:relative;background:#fafbfc;border:1px solid #eef0f2;border-radius:7px;padding:7px 10px 7px 32px;margin-bottom:6px;cursor:pointer}
+.bi:hover{border-color:#93c5fd;background:#f5f9ff}
+.bn{position:absolute;left:11px;top:8px;color:#2b5fd9;font-size:12px;font-weight:700}
+.bt{font-size:12.5px;font-weight:600;color:#1f2328;line-height:1.45}
+.bw{font-size:11px;color:#6b7280;line-height:1.55;margin-top:2px}
+.bgo{display:inline-block;margin-top:3px;font-size:10.5px;color:#2563eb}
+.be{font-size:12px;color:#6b7280;background:#f8fafc;border:1px dashed #e5e7eb;border-radius:7px;padding:9px 11px}
+.bf{font-size:10.8px;color:#9ca3af;padding:8px 14px;border-top:1px solid #eef0f3;line-height:1.6}
+.bflash{outline:2px solid #2b5fd9!important;outline-offset:2px}
+.bfrom{display:inline-block;font-size:10px;color:#4f46e5;background:#eef2ff;border-radius:4px;padding:0 5px;margin-right:6px;font-weight:600}
+@media(max-width:640px){.brief{margin:10px 0 12px}.bs{padding:8px 10px 10px}.brief .bh{padding:9px 11px}}
+</style></head><body><style>
+#hubbar{position:sticky;top:0;z-index:9999;display:flex;align-items:center;gap:2px;
+background:#0f172a;border-radius:9px;padding:0 10px;height:36px;margin:0 0 14px;
+box-shadow:0 2px 10px rgba(15,23,42,.16);font:12px/1 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#hubbar::-webkit-scrollbar{display:none}
+#hubbar a,#hubbar .hb-cur,#hubbar .hb-home{flex:none;display:inline-flex;align-items:center;
+height:24px;padding:0 10px;border-radius:6px;text-decoration:none;color:#cbd5e1;
+font-size:12px;letter-spacing:.2px;transition:background .13s,color .13s}
+#hubbar a:hover{background:rgba(255,255,255,.1);color:#fff}
+#hubbar .hb-home{color:#94a3b8;font-weight:400;margin-right:2px;padding-left:2px}
+#hubbar .hb-home:hover{background:transparent;color:#e2e8f0}
+#hubbar .hb-sep{flex:none;width:1px;height:14px;background:#334155;margin:0 6px}
+#hubbar .hb-cur{background:#d93630;color:#fff;font-weight:600;cursor:default}
+#hubbar .hb-sp{flex:1 1 auto;min-width:0}
+#hubbar .hb-t{flex:none;color:#64748b;font-size:11px;padding-right:2px;white-space:nowrap}
+@media(max-width:560px){
+#hubbar{height:34px;padding:0 6px;margin:0 0 12px;border-radius:8px}
+#hubbar a,#hubbar .hb-cur,#hubbar .hb-home{height:22px;padding:0 8px;font-size:11.5px}
+/* 390px 宽放不下「← 中心」+ 5 个入口，缩成纯箭头腾出 ~24px，尽量整条不滚动 */
+#hubbar .hb-home{font-size:0;padding:0 6px}
+#hubbar .hb-home::before{content:"←";font-size:14px}
+#hubbar .hb-t{display:none}
+#hubbar .hb-sep{margin:0 3px}
+}
+</style><div id="hubbar"><a class="hb-home" href="index.html" title="返回看板中心" onclick="return __hbGo(event,this.href)">← 中心</a><span class="hb-sep"></span><a href="etf.html" onclick="return __hbGo(event,this.href)">ETF 资金</a><a href="sector.html" onclick="return __hbGo(event,this.href)">板块异动</a><span class="hb-cur" aria-current="page">板块雷达</span><a href="calendar.html" onclick="return __hbGo(event,this.href)">事件日历</a><a href="elnino.html" onclick="return __hbGo(event,this.href)">厄尔尼诺</a><a href="commodity.html" onclick="return __hbGo(event,this.href)">商品复盘</a><span class="hb-sp"></span></div><script>window.__hbGo||(function(){
+window.__hbGo=function(e,u){e.preventDefault();
+try{top.location.href=u;}catch(x){location.href=u;}
+return false;};
+/* 移动端 5 个入口超出屏宽，导航条本身可横向滚动。若不主动滚，最右侧的当前项会被裁掉一半，
+   用户第一眼看不到「我在哪一页」。这里只改 hubbar 自己的 scrollLeft，不动整页滚动位置。 */
+document.addEventListener("DOMContentLoaded",function(){
+  var b=document.getElementById("hubbar");
+  if(!b)return;
+  var c=b.querySelector(".hb-cur");
+  if(!c)return;
+  /* 最小滚动：只保证当前项完整露出，不把「← 中心」整条推出视野 */
+  var l=c.offsetLeft, r=l+c.offsetWidth, vl=b.scrollLeft, vr=vl+b.clientWidth;
+  if(r>vr) b.scrollLeft=r-b.clientWidth+6;
+  else if(l<vl) b.scrollLeft=l-6;
+});
+})();</script><div class="wrap">
+<header>
+  <h1>板块雷达 · 客观量价读数</h1>
+  <div class="sub">全市场 366 个概念板块扫描域 · 六个主池板块的近3日 / 近5日累计涨幅、量能环比、上涨天数、全市场涨幅排名与分位，只报客观读数，不设筛选阈值</div>
+  <div class="mkt">
+    <span class="pill">数据日 <b>2026-11-26</b></span>
+    <span class="pill">扫描域 <b>366</b> 个概念板块</span>
+    <span class="pill">主池 <b>3</b> 个固定篮子</span>
+    <span class="pill">口径 <b>标准量价客观读数</b></span>
+  </div>
+</header>
+<div class="brief" id="briefBox"><div class="bh"><h2>今日结论 · 结论先行</h2><span>截至 11-26 · 标准量价口径（近3/5日累计涨幅 / 量能环比 / 上涨天数 / 涨幅排名分位） · 由标准量价客观读数自动推导 · 点任意条目回到证据</span></div><div class="bs"><div class="bst">① 什么东西有异动 <b>3 条</b>（按读数幅度取前 3）</div><div class="bi" data-bt="anchor" data-bg="#radarsec"><span class="bn">1</span><div class="bt">主池板块近3日累计涨幅最高 商业航天 -4.41% · 最低 内存 -6.44%</div><div class="bw">近3日累计＝含今日在内的 3 个交易日累计涨幅，&lt;b&gt;不是今日涨跌&lt;/b&gt;；全市场扫描 366 个概念板块。点条目看主池板块量价读数表与扫描域口径。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="anchor" data-bg="#radarsec"><span class="bn">2</span><div class="bt">量能环比最高 内存 1.00×</div><div class="bw">量能环比＝近3日均量 ÷ 前10日均量（前10日不含近3日）。只报读数，不判断是否持续放量。点条目看主池板块量价读数表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="anchor" data-bg="#radarsec"><span class="bn">3</span><div class="bt">近3日上涨天数最多 内存 2/3 天</div><div class="bw">近3日中收涨的交易日天数，客观计数。点条目看主池板块量价读数表。</div><span class="bgo">点回证据 →</span></div></div><div class="bs"><div class="bst">② 依据成熟标准量价口径，什么值得看 <b>3 条</b>（按读数幅度取前 3）</div><div class="bi" data-bt="anchor" data-bg="#poolsec"><span class="bn">1</span><div class="bt">全市场涨幅排名最前的主池板块：商业航天 225/366（分位 39%）</div><div class="bw">排名与分位按近3日累计涨幅在全市场 366 个概念板块中的相对位置计算。只描述相对位置，不含方向预测。点条目看扫描域与主池口径。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="anchor" data-bg="#radarsec"><span class="bn">2</span><div class="bt">近5日累计涨幅最高 商业航天 -6.39%</div><div class="bw">近5日累计＝含今日在内的 5 个交易日累计涨幅。只报已发生的区间幅度。点条目看主池板块量价读数表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="anchor" data-bg="#radarsec"><span class="bn">3</span><div class="bt">扫描域 366 个概念板块 · 主池 3 个</div><div class="bw">扫描域＝同花顺概念板块中剔除成分数过少的伪板块与非题材型板块后的集合；主池为固定篮子，不随读数增删。点条目看主池板块量价读数表与口径说明。</div><span class="bgo">点回证据 →</span></div></div><div class="bf">结论只描述已发生的事实与客观读数，口径、明细与数据缺口见下方各视图；不含方向预测、不含仓位建议，不假设任何持仓。</div></div>
+
+<section class="board" id="radarsec">
+  <div class="bhead" style="--c:#dc2626"><h2>主池板块量价读数</h2><span class="tag">全量罗列 · 点表头排序</span>
+    <span class="bstat">红涨绿跌 · 收盘口径 · 刷新后保持当前排序键</span></div>
+  <div class="layer">
+    <p class="note">下表为六个主池板块的客观量价读数，<b>默认全量罗列</b>，点击任意列表头可切换排序，排序键在刷新后保留。
+      <b>近3日累计 / 近5日累计</b>是含今日在内的区间累计涨幅，<b>不是今日涨跌</b>；<b>今日</b>=当日涨跌幅（收盘后为收盘值）。
+      两者口径不同，请勿把累计涨幅当成当日涨跌幅看。</p>
+    <table id="rdtbl"><thead><tr><th>主池板块</th><th>对应概念板块</th><th class="r" data-k="r3" title="含今日在内的近3个交易日累计涨幅，点表头排序">近3日累计 ↕</th><th class="r" data-k="r5" title="含今日在内的近5个交易日累计涨幅，点表头排序">近5日累计 ↕</th><th class="r" data-k="vr" title="近3日均量 ÷ 前10日均量，点表头排序">量能环比 ↕</th><th class="r" data-k="upn3" title="近3个交易日中收涨的天数，点表头排序">近3日涨天数 ↕</th><th class="r" data-k="rank" title="按近3日累计涨幅在全市场扫描域中的名次，越小越靠前，点表头排序">全市场涨幅排名 ↕</th><th class="r" data-k="pct" title="近3日累计涨幅超过的板块占比，越大越靠前，点表头排序">分位 ↕</th></tr></thead><tbody><tr><td><b>内存</b></td><td class="sg">存储芯片</td><td class="r" data-v="-6.44"><span class="dn">-6.44%</span></td><td class="r" data-v="-10.02"><span class="dn">-10.02%</span></td><td class="r" data-v="1.0"><span class="">1.00×</span></td><td class="r" data-v="2">2/3</td><td class="r mono" data-v="355">355 / 366</td><td class="r mono" data-v="3.3">3.3%</td></tr><tr><td><b>端侧芯片</b></td><td class="sg">MCU芯片</td><td class="r" data-v="-6.23"><span class="dn">-6.23%</span></td><td class="r" data-v="-8.88"><span class="dn">-8.88%</span></td><td class="r" data-v="0.96"><span class="">0.96×</span></td><td class="r" data-v="1">1/3</td><td class="r mono" data-v="350">350 / 366</td><td class="r mono" data-v="4.6">4.6%</td></tr><tr><td><b>商业航天</b></td><td class="sg">商业航天</td><td class="r" data-v="-4.41"><span class="dn">-4.41%</span></td><td class="r" data-v="-6.39"><span class="dn">-6.39%</span></td><td class="r" data-v="0.99"><span class="">0.99×</span></td><td class="r" data-v="1">1/3</td><td class="r mono" data-v="225">225 / 366</td><td class="r mono" data-v="38.8">38.8%</td></tr></tbody></table>
+  </div>
+</section>
+
+<section class="board">
+  <div class="bhead" style="--c:#4f46e5"><h2>近3日累计涨幅分布</h2><span class="tag">主池 · 红涨绿跌</span></div>
+  <div class="layer">
+    <h3>主池板块近 3 日累计涨幅<small>单位 % · 不是今日涨跌</small></h3>
+    <div class="hb"><div class="hbn">商业航天</div><div class="hbt"><div class="hbf" style="width:68.5%;background:#16a34a"></div></div><div class="hbv" style="color:#16a34a">-4.41%</div></div><div class="hb"><div class="hbn">端侧芯片</div><div class="hbt"><div class="hbf" style="width:96.7%;background:#16a34a"></div></div><div class="hbv" style="color:#16a34a">-6.23%</div></div><div class="hb"><div class="hbn">内存</div><div class="hbt"><div class="hbf" style="width:100.0%;background:#16a34a"></div></div><div class="hbv" style="color:#16a34a">-6.44%</div></div>
+    <p class="note" style="margin-top:10px">条形长度按主池内读数绝对值归一，仅用于横向比较相对幅度，不代表全市场分位。</p>
+  </div>
+</section>
+
+<section class="board" id="poolsec">
+  <div class="bhead" style="--c:#0f766e"><h2>扫描域与主池口径</h2><span class="tag">客观定义 · 不设阈值</span></div>
+  <div class="layer">
+    <p class="note"><b>扫描域</b>：同花顺概念板块（type=N）共 366 个，已剔除成分数过少的伪板块与指数样本股、证金持股、融资融券、高股息等非题材型板块；行业板块、地域板块不在扫描范围。<br>
+      <b>主池</b>：六个固定篮子板块，不随读数增删；此处只回答「主池今天在全市场扫描域中的相对位置」。<br>
+      <b>近3日累计</b> = 当日收盘 ÷ 3 个交易日前收盘 − 1；<b>近5日累计</b>同法。两者均含今日，是区间涨幅而非当日涨跌幅。<br>
+      <b>量能环比</b> = 近 3 日均成交量 ÷ 前 10 日均成交量（前 10 日不含近 3 日），衡量放量是否持续，而非单日脉冲。<br>
+      <b>近3日涨天数</b> = 近 3 个交易日中收涨的天数，客观计数。<br>
+      <b>全市场涨幅排名</b> = 按近3日累计涨幅在扫描域 366 个板块中的名次（越小越靠前）；<b>分位</b> = 该涨幅超过的板块占比（越大越靠前）。两个方向相反，看的时候留意。<br>
+      全部为收盘口径的客观读数：<b>不设筛选阈值、不含方向预测、不含仓位建议，不假设任何持仓</b>。</p>
+  </div>
+</section>
+
+<footer>
+<div class="fh">口径说明</div>
+<span class="fz">
+全市场概念板块扫描域与主池板块的近3日累计、近5日累计、量能环比、上涨天数、全市场涨幅排名与分位，均为基于公开收盘行情的客观计算，不设任何筛选阈值、不做形态判定，也不构成买卖建议。<br>
+「今日」=当日涨跌幅（收盘后为收盘值）；「近3日 / 近5日累计」=含今日在内的区间累计涨幅，不是今日涨跌，两者会背离，例如「今日 −3%、近3日 +2.5%」说明区间内先涨后回，不代表当日上涨。<br>
+主池为固定篮子，本页只读其相对位置与读数，不随读数增删，也不改动任何成分。
+</span>
+<div class="fh">免责声明</div>
+<span class="fz">本页全部数据来源于公开渠道并尽力核对，但不保证绝对完整与无误；如与交易所、指数编制机构或基金管理人正式披露不一致，一律以官方披露为准。所有读数、统计与主观判断，均为基于历史数据的客观计算或个人观点，不构成任何投资建议，不预测未来收益，也不代表任何产品的业绩承诺。使用者应独立判断并自行承担决策风险，据此操作，风险自担。</span>
+<div class="fh">作者信息</div>
+<span class="fz">作者：大S股市每日复盘　·　数据整理、制表与页面制作：本人独立完成　·　本页仅限内部研究使用，未经许可请勿转载或商用　·　页面更新于 2026-11-26 22:24</span>
+</footer></div><script>(function(){
+  var t=document.getElementById('rdtbl'); if(!t) return;
+  var KEY='radar_sort_v2';
+  function apply(k,dir){
+    var ths=t.querySelectorAll('thead th'), idx=-1;
+    [].forEach.call(ths,function(th,i){ th.classList.remove('sorted');
+      if(th.getAttribute('data-k')===k) idx=i; });
+    if(idx<0) return;
+    ths[idx].classList.add('sorted');
+    var tb=t.tBodies[0], rows=[].slice.call(tb.querySelectorAll('tr'));
+    rows.sort(function(a,b){
+      var av=parseFloat(a.cells[idx].getAttribute('data-v')),
+          bv=parseFloat(b.cells[idx].getAttribute('data-v'));
+      if(isNaN(av)) av=-1e12; if(isNaN(bv)) bv=-1e12;
+      return (av-bv)*dir;
+    });
+    rows.forEach(function(r){ tb.appendChild(r); });
+  }
+  var saved=null; try{ saved=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
+  if(saved && saved.k) apply(saved.k, saved.d||-1);
+  [].forEach.call(t.querySelectorAll('thead th[data-k]'),function(th){
+    th.addEventListener('click',function(){
+      var k=th.getAttribute('data-k'), cur=null, dir=-1;
+      try{ cur=JSON.parse(localStorage.getItem(KEY)||'null'); }catch(e){}
+      if(cur && cur.k===k) dir=-(cur.d||-1);
+      apply(k,dir);
+      try{ localStorage.setItem(KEY,JSON.stringify({k:k,d:dir})); }catch(e){}
+    });
+  });
+})();</script><script>window.addEventListener('load',function(){
+  var es=document.querySelectorAll('#briefBox .bi');
+  for(var i=0;i<es.length;i++){(function(el){el.onclick=function(){
+    var t=el.getAttribute('data-bt'),g=el.getAttribute('data-bg');
+    if(t==='link'){try{top.location.href=g;}catch(e){location.href=g;}return;}
+    var n=g?document.querySelector(g):null;
+    if(n){n.scrollIntoView({behavior:'smooth',block:'center'});
+      n.classList.add('bflash');setTimeout(function(){n.classList.remove('bflash')},1800);}
+  };})(es[i]);}
+});</script></body></html>
