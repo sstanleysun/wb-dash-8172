@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>厄尔尼诺专题 · 2026-11-26 收盘版（第 21 期）</title>
+<style>
+:root{
+  --ink:#1b1b1b; --ink-2:#3c3c3c; --muted:#6b6b6b; --line:#e3ded6;
+  --paper:#fbfaf7; --card:#ffffff; --accent:#9e2b25; --accent-2:#b8892f;
+  --bg-soft:#f3efe8;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--paper); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Source Han Sans SC",sans-serif;
+  font-size:16px; line-height:1.75; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px 80px;}
+
+/* ---------- 页头 ---------- */
+header.hero{
+  background:linear-gradient(135deg,#1f1a17 0%,#2e2620 55%,#3a2c22 100%);
+  color:#f6f1e7; padding:44px 24px 34px; margin-bottom:0;
+}
+.hero-inner{max-width:1120px;margin:0 auto;}
+.kicker{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:12px;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent-2); margin-bottom:14px; font-weight:600;
+}
+.kicker::before{content:"";width:26px;height:2px;background:var(--accent-2);display:block;}
+h1.hero-title{margin:0 0 10px;font-size:34px;line-height:1.25;font-weight:700;letter-spacing:-.01em;}
+.hero-sub{margin:0;color:#c9bfae;font-size:14px;}
+.hero-tags{margin-top:18px;display:flex;flex-wrap:wrap;gap:8px;}
+.tag{
+  font-size:12px;padding:4px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.22); color:#e8dfd0; background:rgba(255,255,255,.04);
+}
+.tag.hot{border-color:rgba(158,43,37,.9);background:rgba(158,43,37,.28);color:#ffd9d4;}
+
+/* ---------- 目录 ---------- */
+nav.toc{
+  position:sticky;top:0;z-index:20;background:rgba(251,250,247,.94);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);
+  margin-bottom:34px; overflow-x:auto;
+}
+nav.toc .inner{max-width:1120px;margin:0 auto;padding:10px 24px;display:flex;gap:6px;white-space:nowrap;}
+nav.toc a{
+  font-size:13px;color:var(--muted);text-decoration:none;padding:5px 10px;border-radius:6px;
+}
+nav.toc a:hover{background:var(--bg-soft);color:var(--ink);}
+
+/* ---------- 正文 ---------- */
+main{}
+h2{
+  font-size:23px;margin:46px 0 18px;padding-left:14px;position:relative;
+  font-weight:700;letter-spacing:-.01em;
+}
+h2::before{
+  content:"";position:absolute;left:0;top:6px;bottom:6px;width:4px;border-radius:2px;
+  background:linear-gradient(180deg,var(--accent),var(--accent-2));
+}
+h3{font-size:17.5px;margin:30px 0 12px;font-weight:700;color:var(--ink);}
+h3::before{content:"· ";color:var(--accent-2);}
+p{margin:12px 0;color:var(--ink-2);}
+strong{font-weight:700;color:var(--ink);}
+em{font-style:normal;color:var(--accent);font-weight:600;}
+hr{border:none;border-top:1px solid var(--line);margin:40px 0;}
+
+blockquote{
+  margin:22px 0;padding:16px 20px;background:var(--bg-soft);
+  border-left:3px solid var(--accent-2);border-radius:0 8px 8px 0;color:var(--ink-2);
+}
+blockquote p{margin:6px 0;}
+
+ul,ol{padding-left:22px;color:var(--ink-2);}
+li{margin:6px 0;}
+
+/* ---------- 表格 ---------- */
+.table-scroll{overflow-x:auto;margin:18px 0;border-radius:10px;border:1px solid var(--line);background:var(--card);}
+table{border-collapse:collapse;width:100%;font-size:14.5px;}
+thead th{
+  background:#f1ece2;color:#2a2420;font-weight:700;text-align:left;
+  padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap;
+}
+tbody td{padding:11px 14px;border-bottom:1px solid #efeae1;vertical-align:top;min-width:86px;}
+tbody tr:last-child td{border-bottom:none;}
+tbody tr:hover{background:#faf7f1;}
+tbody td:first-child{font-weight:600;color:var(--ink);white-space:nowrap;}
+
+/* ---------- 代码 ---------- */
+code{background:#efeae1;padding:1px 6px;border-radius:4px;font-size:13.5px;}
+pre{background:#221d19;color:#ece4d8;padding:16px;border-radius:10px;overflow:auto;font-size:13px;}
+
+/* ---------- 页脚 ---------- */
+footer{
+  margin-top:64px;padding-top:22px;border-top:1px solid var(--line);
+  color:var(--muted);font-size:13px;line-height:1.7;
+}
+footer em{color:var(--muted);font-weight:400;font-style:italic;}
+footer .fh{font-size:12px;font-weight:650;color:var(--ink-2);margin:14px 0 3px;letter-spacing:.02em;}
+footer .fz{display:block;font-size:12px;line-height:1.8;color:var(--muted);}
+
+@media (max-width:720px){
+  h1.hero-title{font-size:25px;}
+  h2{font-size:20px;margin-top:36px;}
+  .wrap{padding:0 16px 60px;}
+  table{font-size:13px;}
+}
+@media print{
+  nav.toc{display:none;}
+  body{background:#fff;}
+  header.hero{background:#fff;color:#000;border-bottom:2px solid #000;}
+  .hero-sub,.tag{color:#333;border-color:#bbb;}
+  h2{page-break-after:avoid;}
+  .table-scroll{overflow:visible;}
+}
+</style>
+</head>
+<body><style>
+#hubbar{position:sticky;top:0;z-index:9999;display:flex;align-items:center;gap:2px;
+background:#0f172a;border-radius:9px;padding:0 10px;height:36px;margin:0 0 14px;
+box-shadow:0 2px 10px rgba(15,23,42,.16);font:12px/1 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#hubbar::-webkit-scrollbar{display:none}
+#hubbar a,#hubbar .hb-cur,#hubbar .hb-home{flex:none;display:inline-flex;align-items:center;
+height:24px;padding:0 10px;border-radius:6px;text-decoration:none;color:#cbd5e1;
+font-size:12px;letter-spacing:.2px;transition:background .13s,color .13s}
+#hubbar a:hover{background:rgba(255,255,255,.1);color:#fff}
+#hubbar .hb-home{color:#94a3b8;font-weight:400;margin-right:2px;padding-left:2px}
+#hubbar .hb-home:hover{background:transparent;color:#e2e8f0}
+#hubbar .hb-sep{flex:none;width:1px;height:14px;background:#334155;margin:0 6px}
+#hubbar .hb-cur{background:#d93630;color:#fff;font-weight:600;cursor:default}
+#hubbar .hb-sp{flex:1 1 auto;min-width:0}
+#hubbar .hb-t{flex:none;color:#64748b;font-size:11px;padding-right:2px;white-space:nowrap}
+@media(max-width:560px){
+#hubbar{height:34px;padding:0 6px;margin:0 0 12px;border-radius:8px}
+#hubbar a,#hubbar .hb-cur,#hubbar .hb-home{height:22px;padding:0 8px;font-size:11.5px}
+/* 390px 宽放不下「← 中心」+ 5 个入口，缩成纯箭头腾出 ~24px，尽量整条不滚动 */
+#hubbar .hb-home{font-size:0;padding:0 6px}
+#hubbar .hb-home::before{content:"←";font-size:14px}
+#hubbar .hb-t{display:none}
+#hubbar .hb-sep{margin:0 3px}
+}
+</style><div id="hubbar"><a class="hb-home" href="index.html" title="返回看板中心" onclick="return __hbGo(event,this.href)">← 中心</a><span class="hb-sep"></span><a href="etf.html" onclick="return __hbGo(event,this.href)">ETF 资金</a><a href="sector.html" onclick="return __hbGo(event,this.href)">板块异动</a><a href="radar.html" onclick="return __hbGo(event,this.href)">板块雷达</a><a href="calendar.html" onclick="return __hbGo(event,this.href)">事件日历</a><span class="hb-cur" aria-current="page">厄尔尼诺</span><a href="commodity.html" onclick="return __hbGo(event,this.href)">商品复盘</a><span class="hb-sp"></span></div><script>window.__hbGo||(function(){
+window.__hbGo=function(e,u){e.preventDefault();
+try{top.location.href=u;}catch(x){location.href=u;}
+return false;};
+/* 移动端 5 个入口超出屏宽，导航条本身可横向滚动。若不主动滚，最右侧的当前项会被裁掉一半，
+   用户第一眼看不到「我在哪一页」。这里只改 hubbar 自己的 scrollLeft，不动整页滚动位置。 */
+document.addEventListener("DOMContentLoaded",function(){
+  var b=document.getElementById("hubbar");
+  if(!b)return;
+  var c=b.querySelector(".hb-cur");
+  if(!c)return;
+  /* 最小滚动：只保证当前项完整露出，不把「← 中心」整条推出视野 */
+  var l=c.offsetLeft, r=l+c.offsetWidth, vl=b.scrollLeft, vr=vl+b.clientWidth;
+  if(r>vr) b.scrollLeft=r-b.clientWidth+6;
+  else if(l<vl) b.scrollLeft=l-6;
+});
+})();</script>
+<header class="hero">
+  <div class="hero-inner">
+    <div class="kicker">EL NIÑO · 投研更新</div>
+    <h1 class="hero-title">厄尔尼诺专题 · 2026-11-26 收盘版（第 21 期）</h1>
+    <p class="hero-sub">数据截至 2026-11-26 · 单页可视化版 · 可直接转发</p>
+    <div class="hero-tags"><a class="tag" href="archive.html" style="text-decoration:none;border-color:rgba(184,137,47,.75);color:#f0d9a8;">历史各期 →</a><span class="tag hot">超强厄尔尼诺</span><span class="tag">2026-11-26</span></div>
+  </div>
+</header>
+<nav class="toc"><div class="inner"><a href="#_1">一、气候端：弱冷空气叠加月底大回暖 + 海温峰值确认中</a><a href="#19-2026-11-26">二、大类品种全景（19 品种，2026-11-26 结算口径）</a><a href="#_2">三、糖链：盘面小幅修复，压榨旺季主线不变</a><a href="#_3">四、橡胶链：小幅修复延续，仍由原油主导</a><a href="#_4">五、粮食与种业：种业股反弹，天气未进盘面</a><a href="#_5">六、油脂油料与鱼粉：油脂窄幅波动，鱼粉减供逻辑不变</a><a href="#_6">七、棉花：远期倒春寒是主线，当前供需宽松</a><a href="#_7">八、饲料与养殖：本期核心——现货十四连涨、期货回调，期现背离</a><a href="#_8">九、结论</a><a href="#_9">十、跟踪清单（下一交易日 / 本周）</a><a href="#a-11-26">十一、A 股市场每日复盘（11-26 收盘）</a></div></nav>
+<main class="wrap">
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>项目</th>
+<th>内容</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>期号</td>
+<td>第 21 期（日更第 6 期；11-26 收盘：生猪期现背离 + 农链分化 + 商品修复降温）</td>
+</tr>
+<tr>
+<td>数据截至</td>
+<td>行情读数 <strong>2026-11-26 收盘</strong>（结算价口径）；事件与天气动态截至 11-26</td>
+</tr>
+<tr>
+<td>覆盖大类</td>
+<td>糖 / 橡胶 / 粮食种业 / 油脂油料 / 鱼粉 / 棉花 / 饲料 / 养殖（含生猪、白羽鸡）</td>
+</tr>
+<tr>
+<td>更新方式</td>
+<td>会话触发（每日报告：交易日收盘版）</td>
+</tr>
+<tr>
+<td>本期事件</td>
+<td><strong>生猪现货十四连涨、期货回调</strong>：现货均价口径 9.83–10.15 元/公斤（较昨 +0.12~0.16），自 11/9 低点 8.52 累涨约 16%；但生猪主力 LH 收 9,495（结算 -1.05%/收盘 -0.58%），期现背离；<strong>A 股分化</strong>——种业反弹（农发种业 +2.27%）/养殖回落（牧原 -2.00%、新五丰 -2.14%），糖业橡胶小幅同向</td>
+</tr>
+<tr>
+<td>自检</td>
+<td>通过（11/11 项）</td>
+</tr>
+</tbody>
+</table></div>
+<blockquote>
+<p>一句话：<strong>上期生猪涨停后「冲高回落守住涨幅」，今天期现走向分叉——现货延续十四连涨（屠企开工率 33%+、销区到货回暖），期货主力却结算 -1.05%、收盘 -0.58%，远月贴水扩大；多家机构口径一致：涨的是报价不是走量，仍属修复而非反转。农产品结算口径从上期 16 涨 3 跌降为 12 涨 7 跌，修复行情降温；A 股农链种业反弹、养殖回落，与盘面同步。气候端进入「26–28 日弱冷空气 + 月底大回暖」组合，腌腊能否集中启动首次被提示受副高偏强、南方降温不及预期的约束。</strong></p>
+</blockquote>
+<hr />
+<h2 id="_1">一、气候端：弱冷空气叠加月底大回暖 + 海温峰值确认中</h2>
+<h3 id="11-1124">1.1 海温与定调（沿用 11/24 已确认读数）</h3>
+<ul>
+<li>国家气候中心图：10 月 Niño3.4 平均海温偏高 <strong>3℃以上</strong>（有监测记录以来最强）；11 月上旬（8–14 日）赤道中东太平洋部分海区偏高<strong>超 4℃</strong>；NOAA 11/12（Niño3.4 +2.5℃、Niño1+2 +4.4℃）、ECMWF 11/23（加拉帕戈斯近海局部 +9.9℃）——峰值「或许正在到来」的判断本周未变。</li>
+<li>本期无新增官方旬值发布，海温端点以上述已确认读数为基准；下一验证点是 Niño3.4 官方旬值。</li>
+</ul>
+<h3 id="12-2628">1.2 天气：26–28 日弱冷空气 + 月底暖如小阳春</h3>
+<ul>
+<li>中央气象台 11/26：26 日夜间至 28 日新一轮冷空气影响北方——西北地区东部、内蒙古、华北、东北、黄淮、江淮降温 6~8℃，内蒙古中东部、东北东部 8~10℃、局地 10℃+，伴 4~6 级风、阵风 7~9 级；新疆北部、甘肃、内蒙古、黑龙江、吉林有小到中雪或雨夹雪，局地大到暴雪；26 日 18 时继续发布大风蓝色预警。西北东部有扬沙浮尘、西南东部有大雾。</li>
+<li>新华网 11/26：26 日起南方降水快速收缩、转晴持续到月底；本月底到下月初南北气温升至近期高点，长江中下游「暖如小阳春」。济南 18℃→明后 10℃→30 日 21℃，气温起伏大。</li>
+<li>定性：这股冷空气<strong>总体偏弱</strong>，短暂打断升温后快速回升，难挡月底大回暖。</li>
+</ul>
+<blockquote>
+<p><strong>商品端现状</strong>：气候传导到农产品的现实链条仍只有一条——北方灌肠提前（11 月中旬启动）、南方腌腊预热，支撑腌腊消费增量预期；但本期出现新约束：有机构提示「今年秋冬厄尔尼诺使副高偏强、南方销区降温或不及预期，或不利于南方腌腊集中启动」（鸡病专业网 11/26，属机构观点，非事实确认）。暖冬本身对越冬作物偏改善，不构成减产冲击。
+<strong>重点标的跟踪</strong>：26–28 日弱冷空气对东北售粮的实际扰动；月底大回暖的持续性；南方腌腊是否因气温偏高延后；Niño3.4 官方旬值确认峰值。</p>
+</blockquote>
+<hr />
+<h2 id="19-2026-11-26">二、大类品种全景（19 品种，2026-11-26 结算口径）</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>品种</th>
+<th>结算涨跌</th>
+<th>收盘涨跌</th>
+<th>品种</th>
+<th>结算涨跌</th>
+<th>收盘涨跌</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>集运欧线EC</td>
+<td><strong>+3.53%</strong></td>
+<td>+4.36%</td>
+<td>焦煤JM</td>
+<td><strong>+2.57%</strong></td>
+<td>+4.18%</td>
+</tr>
+<tr>
+<td>尿素UR</td>
+<td>+1.63%</td>
+<td>+1.92%</td>
+<td>20号胶NR</td>
+<td>+1.18%</td>
+<td>+1.41%</td>
+</tr>
+<tr>
+<td>郑糖SR</td>
+<td>+0.92%</td>
+<td>+0.98%</td>
+<td>菜粕RM</td>
+<td>+0.72%</td>
+<td>+0.72%</td>
+</tr>
+<tr>
+<td>豆一A</td>
+<td>+0.66%</td>
+<td>+0.54%</td>
+<td>沪胶RU</td>
+<td>+0.65%</td>
+<td>+0.76%</td>
+</tr>
+<tr>
+<td>豆粕M</td>
+<td>+0.55%</td>
+<td>+0.51%</td>
+<td>玉米C</td>
+<td>+0.46%</td>
+<td>+0.65%</td>
+</tr>
+<tr>
+<td>棉花CF</td>
+<td>+0.29%</td>
+<td>+0.39%</td>
+<td>鸡蛋JD</td>
+<td>+0.22%</td>
+<td>+0.57%</td>
+</tr>
+<tr>
+<td>棕榈油P</td>
+<td>-0.01%</td>
+<td>-0.17%</td>
+<td>沪铝AL</td>
+<td>-0.10%</td>
+<td>+0.29%</td>
+</tr>
+<tr>
+<td>豆油Y</td>
+<td>-0.25%</td>
+<td>-0.20%</td>
+<td>菜油OI</td>
+<td>-0.74%</td>
+<td>+0.33%</td>
+</tr>
+<tr>
+<td>生猪LH</td>
+<td>-1.05%</td>
+<td>-0.58%</td>
+<td>沪铜CU</td>
+<td>-1.10%</td>
+<td>-0.51%</td>
+</tr>
+<tr>
+<td>碳酸锂LC</td>
+<td>-1.26%</td>
+<td><strong>-3.16%</strong></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>结算口径 12 涨 7 跌</strong>（收盘口径集运 +4.36%/焦煤 +4.18% 领涨，碳酸锂 -3.16% 领跌）。较上期「16 涨 3 跌」修复面收窄，涨跌互现；商品普涨行情降温。</p>
+<blockquote>
+<p><strong>判定</strong>：结算涨跌前列（集运、焦煤、尿素）的主驱动仍是运价、宏观与工业品情绪，<strong>没有一条由厄尔尼诺供给端直接驱动</strong>；农产品中郑糖、豆粕、玉米、棉花为小幅修复，跟气候无直接因果。唯生猪（经腌腊需求间接链）出现期现背离，是本期农业链的核心变化。
+<strong>商品端现状</strong>：19 品种结算/收盘读数见上表；碳酸锂收盘 -3.16% 与结算 -1.26% 分歧最大，属日内波动非趋势。
+<strong>重点标的跟踪</strong>：生猪期现背离能否收敛；集运运价独立逻辑；碳酸锂日内波动。</p>
+</blockquote>
+<hr />
+<h2 id="_2">三、糖链：盘面小幅修复，压榨旺季主线不变</h2>
+<blockquote>
+<p><strong>商品端现状</strong>：郑糖 SR 收 5,170（结算 +0.92%/收盘 +0.98%），延续上期修复但幅度收窄，国内压榨旺季增产预期仍压制，北半球压榨进度是 12 月主线。A 股糖业今日分化——中粮糖业 +1.16%、<em>ST广糖 -1.40%（上期逆势领涨后回落），属题材波动，与郑糖盘面小幅修复并不同步。
+</em><em>重点标的跟踪</em>*：印度/泰国 12 月压榨数据；国内销糖率；2027 年长江中下游梅雨偏强对糖料蔗的远期影响（国气候中心预测）。</p>
+</blockquote>
+<hr />
+<h2 id="_3">四、橡胶链：小幅修复延续，仍由原油主导</h2>
+<blockquote>
+<p><strong>商品端现状</strong>：沪胶 RU 18,550（结算 +0.65%/收盘 +0.76%）、20 号胶 NR 15,860（结算 +1.18%/收盘 +1.41%）——连续第二日技术性修复，驱动仍是原油与轮胎需求，天气风险只放大波动。海南橡胶 A 股 +0.98%，与胶价修复同向、弹性更大（题材属性）。
+<strong>重点标的跟踪</strong>：原油走势；RU 能否站稳 18,500 一线；泰南 12 月降水距平；20 号胶仓单。</p>
+</blockquote>
+<hr />
+<h2 id="_4">五、粮食与种业：种业股反弹，天气未进盘面</h2>
+<blockquote>
+<p><strong>商品端现状</strong>：玉米 C 2,170（结算 +0.46%/收盘 +0.65%）、豆一 A 5,026（结算 +0.66%/收盘 +0.54%），小幅修复。26–28 日冷空气偏弱偏北，对东北秋粮购销实际扰动有限，盘面未给天气溢价。A 股种业今日反弹（农发种业 +2.27%、登海种业 +1.61%、隆平高科 +0.39%、大北农 -0.34%）——与上期回落形成交替，缺乏基本面延续性。
+<strong>重点标的跟踪</strong>：26–28 日弱冷空气对东北售粮的实际影响；东北临储玉米价官宣；黄河宁蒙河段首凌窗口；2027 年春季倒春寒对播种的远期影响。</p>
+</blockquote>
+<hr />
+<h2 id="_5">六、油脂油料与鱼粉：油脂窄幅波动，鱼粉减供逻辑不变</h2>
+<blockquote>
+<p><strong>商品端现状</strong>：豆粕 M 3,126（结算 +0.55%）、棕榈油 P 8,322（结算 -0.01%/收盘 -0.17%）、菜油 10,007（结算 -0.74%/收盘 +0.33%）、豆油 Y 8,477（结算 -0.25%）窄幅波动。鱼粉减供逻辑维持：招商证券 11/22 周报——2026 年 1–8 月主要产区鱼粉累计产量同比 -45%、国内主要港口库存降至 9.40 万吨；价格处历史高位（上期超级蒸汽 26,500 元/吨、CNF 3,450 美元）。油脂仍受产区高库存、国内采购放缓压制。
+<strong>重点标的跟踪</strong>：鱼粉港口库存周报与 CNF 报价；秘鲁 2027 年 1 月 B 季配额（回调触发器）；MPOB 11 月报（12 月上旬）；Conab 首次产量调整；南美大豆生育期天气。</p>
+</blockquote>
+<hr />
+<h2 id="_6">七、棉花：远期倒春寒是主线，当前供需宽松</h2>
+<blockquote>
+<p><strong>商品端现状</strong>：CF 15,465（结算 +0.29%/收盘 +0.39%），小幅修复，新疆机采近尾声、供需宽松。ENSO 对棉花的影响在尾期——真正变量是 2027 年春季倒春寒对播种的影响，冬季南方降水偏多若与采摘收尾重叠会损耗品级，但本季影响有限。
+<strong>重点标的跟踪</strong>：下游订单；2027 春倒春寒窗口（远期，尚未进入定价）。</p>
+</blockquote>
+<hr />
+<h2 id="_7">八、饲料与养殖：本期核心——现货十四连涨、期货回调，期现背离</h2>
+<blockquote>
+<p><strong>商品端现状</strong>：生猪主力 LH 收 9,495（结算 -1.05%/收盘 -0.58%），与现货上涨方向相反；鸡蛋 JD 3,183（结算 +0.22%/收盘 +0.57%）。新浪财经 11/26：生猪期货 2701 合约时隔 5 年再度涨停后，26 日主力合约全线下挫、远月贴水扩大，市场对持续性预期收缩。</p>
+<p><strong>现货仍在涨，但涨的是报价、不是走量</strong>：
+- <strong>价格</strong>：全国外三元均价口径分散——9.83 元/公斤（+0.16，山东天源）、9.95 元（+0.12，机构监测）、10.14 元（+0.14，德泓农牧）、10.15 元附近（猪易通），普遍较昨上涨 0.12~0.16；自 11/9 低点 8.52 累涨约 16%。
+- <strong>屠宰承接</strong>：开工率修复至 33% 以上，样本企业日屠宰量从 11 月初 18.11 万头增至 11/23 的 19.40 万头（+7.13%，卓创）；销区到货回暖。但 26 日白条走货回落，部分区域订单缩减 10%—15%，屠企压价意愿仍在。
+- <strong>灌肠提前</strong>：北方灌肠从往年 11 月下旬提前至 11 月中旬，南方腌腊零星开启（卓创）。</p>
+<p><strong>机构口径高度一致——修复不是反转</strong>：
+1. <strong>期现背离</strong>：现货报价上涨、期货主力回调、远月贴水扩大，盘面已给出对持续性的怀疑。
+2. <strong>标肥价差松动</strong>：肥标价差收窄至 0.84 元/公斤，中大猪上涨承压，二育进场动力减弱、观望增加（搜猪网 11/26）。
+3. <strong>后移猪源是最大压力</strong>：10 月样本出栏完成率仅 97.97%（涌益），未完成猪源推迟到 11 月；11 月计划出栏 3,018 万头、日均较 10 月实际 +6.04%，出栏均重 130.17 公斤（周增 0.30）——供应偏紧里掺着「压栏后移」，是春节前最大潜在压力源。
+4. <strong>冻品高位</strong>：钢联屠宰企业库容率 30.72%，历史同期高位；白条一旦走高，冻肉出库变增量供给。
+5. <strong>去化远水解不了近渴</strong>：三季度末能繁 3,602 万头（同比 -10.7%、为正常保有量 96%），10 月涌益样本环比再降 0.58%；但繁育周期约 10 个月，三季度去化要到 2027 年二、三季度才兑现，且规模场生产效率提升对冲「母猪减量≠出栏减量」。</p>
+<p><strong>新增气候约束（机构观点，非事实确认）</strong>：鸡病专业网 11/26 提示——今年厄尔尼诺使副高偏强、南方销区降温或不及预期，或不利于南方腌腊集中启动；当前南方腌腊仍处预热，高峰通常 11 月下旬至 12 月。
+<strong>重点标的跟踪</strong>：生猪期现背离能否收敛；屠宰开工率与白条走货能否续升；12 月中下旬二育大猪出栏节奏；能繁母猪存栏月度数据；南方腌腊启动进度。</p>
+</blockquote>
+<hr />
+<h2 id="_8">九、结论</h2>
+<ol>
+<li><strong>生猪是本期唯一的核心边际变化，且方向出现分叉</strong>：现货十四连涨（屠企开工率 33%+、销区到货回暖）与期货主力回调（结算 -1.05%、远月贴水扩大）同时发生，多家机构定性「修复非反转」——涨的是报价不是走量，标肥价差收窄、二育动力减弱、后移猪源与冻品高位构成上方约束。</li>
+<li><strong>商品修复行情降温</strong>：结算口径从上期 16 涨 3 跌降为 12 涨 7 跌；领涨的集运/焦煤/尿素仍是运价与宏观工业品驱动，农产品（郑糖、豆粕、玉米、棉花）仅小幅修复，没有一条由厄尔尼诺供给端直接驱动。</li>
+<li><strong>鱼粉仍是最硬的供给端兑现</strong>：1–8 月产量 -45%、港口库存 9.40 万吨，确定性最高但已在历史高位；回调触发器是 2027 年 1 月秘鲁 B 季开捕。</li>
+<li><strong>气候主线：弱冷空气 + 月底大回暖</strong>：26–28 日冷空气总体偏弱、位置偏北，难挡月底「暖如小阳春」；海温峰值判断本周未变，仍待官方旬值确认。腌腊端首次出现「副高偏强、南方降温不及预期或延后启动」的机构提示，属观点、待验证——气候对农业的影响仍是「区域验证 + 远期期权」，不是当日盘面驱动。</li>
+</ol>
+<hr />
+<h2 id="_9">十、跟踪清单（下一交易日 / 本周）</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>项</th>
+<th>观察点</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>生猪</td>
+<td>期现背离能否收敛；屠宰开工率与白条走货续升与否（需求核心指标）</td>
+</tr>
+<tr>
+<td>养殖/种业股</td>
+<td>种业反弹、养殖回落的交替能否延续，还是一日游</td>
+</tr>
+<tr>
+<td>橡胶</td>
+<td>修复延续性（仍看原油）；RU 18,500 得失</td>
+</tr>
+<tr>
+<td>鱼粉</td>
+<td>港口库存周报、CNF 报价</td>
+</tr>
+<tr>
+<td>冷空气</td>
+<td>26–28 日弱冷空气（偏弱偏北）对东北售粮影响</td>
+</tr>
+<tr>
+<td>气候/腌腊</td>
+<td>Niño3.4 官方旬值确认峰值；南方腌腊是否因气温偏高延后启动</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="a-11-26">十一、A 股市场每日复盘（11-26 收盘）</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>指数</th>
+<th>收盘</th>
+<th>涨跌</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上证指数</td>
+<td>3,476.88</td>
+<td>+0.01%</td>
+</tr>
+<tr>
+<td>沪深300</td>
+<td>3,900.55</td>
+<td>+0.06%</td>
+</tr>
+<tr>
+<td>深证成指</td>
+<td>10,084.04</td>
+<td>-0.02%</td>
+</tr>
+<tr>
+<td>创业板指</td>
+<td>2,189.82</td>
+<td>+0.29%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>农链代表股（腾讯快照 11-26 收盘）</strong>：种业——农发种业 <strong>+2.27%</strong>、登海种业 +1.61%、隆平高科 +0.39%、大北农 -0.34%（反弹）；养殖——牧原股份 <strong>-2.00%</strong>、新五丰 <strong>-2.14%</strong>、天邦食品 -1.38%、圣农发展 -0.87%、唐人神 -0.78%、正邦科技 -0.34%（回落）；糖业——中粮糖业 +1.16%、*ST广糖 -1.40%（分化）；橡胶——海南橡胶 +0.98%；饲料——新希望 -2.36%、海大集团 -1.20%；北大荒 -2.56%。</p>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>对照</th>
+<th>读数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上期（11/24）</td>
+<td>上证 +0.27%、创业板 -0.05%；种业/养殖回落分化、糖业/橡胶逆势，生猪守住涨幅</td>
+</tr>
+<tr>
+<td>本期</td>
+<td>上证 +0.01%、创业板 +0.29%；种业反弹、养殖回落，糖业分化，生猪期现背离</td>
+</tr>
+<tr>
+<td>下一交易日待验证</td>
+<td>生猪期现背离能否收敛；种业反弹与养殖回落的交替能否延续</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>复盘一句话</strong>：指数近乎平盘，农链内部继续交替——上期回落的种业今日反弹、上期分化的养殖今日走弱，一天一个方向，仍是情绪与超跌修复主导；生猪现货涨、期货跌的期现背离，是农业链里唯一有基本面数据支撑、但方向出现分叉的品种，与其他纯题材轮动要分开看。</p>
+<hr />
+<blockquote>
+<p>数据来源（信息源）：中央气象台 11/26 天气公报/大风蓝色预警/每日天气提示、新华网 11/26（南方转晴暖如小阳春）、中国气象局 11/26、中国天气网专业产品、国家气候中心海温距平图、NOAA CPC 11/12、ECMWF 11/23、招商证券 11/22 主题周报、新浪财经 11/26（生猪期货涨停后回调）、搜猪网 11/26（期现/标肥价差/出栏计划）、鸡病专业网 11/26（腌腊与副高观点）、德泓农牧/山东天源 11/26 猪价、上海钢联/卓创/Mysteel/涌益监测数据；期货行情为 brze 源（tu.brze.top）11/26 结算数据（碳酸锂 LC.GFE 主力连续），A 股读数为腾讯快照 11/26 收盘。</p>
+</blockquote>
+<p><strong>免责声明：本报告全部内容为基于公开信息的个人研究与记录，不构成投资建议，不预测未来收益；所有分级、判定与观点均为主观分析，据此操作，风险自担。</strong></p>
+<footer>
+  <p>本文档由厄尔尼诺专题自动化流水线生成，数据源与口径见文末。</p>
+  <div class="fh">免责声明</div>
+  <span class="fz">本页全部数据来源于公开渠道并尽力核对，但不保证绝对完整与无误；如与交易所、指数编制机构或基金管理人正式披露不一致，一律以官方披露为准。所有分级、信号、筛选与主观判断，均为基于历史数据的统计规则或个人观点，不构成任何投资建议，不预测未来收益，也不代表任何产品的业绩承诺。使用者应独立判断并自行承担决策风险，据此操作，风险自担。</span>
+  <div class="fh">作者信息</div>
+  <span class="fz">作者：大S股市每日复盘　·　数据整理、制表与页面制作：本人独立完成　·　本页仅限内部研究使用，未经许可请勿转载或商用　·　页面更新于 2026-11-26</span>
+</footer>
+</main>
+</body>
+</html>
