@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f6f3">
+<title>事件日历</title>
+<style>
+:root{
+  --bg:#f7f6f3; --card:#ffffff; --ink:#1b1b1b; --sub:#6a6660; --line:#e4e1da;
+  --accent:#b8342b; --build:#b8342b; --defend:#a4730b; --avoid:#33465c; --none:#7d8489;
+  --ok:#1f7a4d; --bad:#b8342b; --na:#8a8a8a;
+  --r:14px; --sh:0 1px 2px rgba(0,0,0,.04),0 6px 18px rgba(0,0,0,.045);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth;scroll-padding-top:64px}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:15px/1.62 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Noto Sans CJK SC",sans-serif;
+  font-feature-settings:"tnum";
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 16px 64px}
+
+/* ---------- lock ---------- */
+#lock{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.lock-card{width:100%;max-width:370px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:28px 22px 22px;box-shadow:0 2px 4px rgba(0,0,0,.03),0 18px 44px rgba(0,0,0,.07)}
+.lock-logo{font-size:20px;font-weight:700;letter-spacing:2px;text-align:center}
+.lock-sub{text-align:center;font-size:12.5px;color:var(--sub);margin:6px 0 20px;letter-spacing:.3px}
+.lock-input{
+  width:100%;padding:13px 14px;border:1px solid var(--line);border-radius:10px;
+  font-size:15px;letter-spacing:1.6px;text-align:center;background:#fbfaf8;color:var(--ink);
+  font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;text-transform:uppercase;
+  transition:border-color .15s,background .15s;outline:none;
+}
+.lock-input:focus{border-color:var(--accent);background:#fff}
+.lock-input::placeholder{color:#c2bdb5;letter-spacing:1.2px}
+.lock-btn{
+  width:100%;margin-top:11px;padding:13px;border:none;border-radius:10px;
+  background:var(--accent);color:#fff;font-size:15px;font-weight:600;letter-spacing:1px;cursor:pointer;
+  transition:opacity .15s;
+}
+.lock-btn:hover{opacity:.9}
+.lock-btn:disabled{opacity:.5;cursor:default}
+.lock-err{color:var(--accent);font-size:12.5px;margin-top:9px;min-height:18px;text-align:center;line-height:1.4}
+.lock-buy{margin-top:16px;text-align:center;font-size:11.5px;color:#a09b93}
+.lock-disc{margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:10.5px;line-height:1.65;color:#a8a29a;text-align:left}
+.lock-disc b{color:#8a857e;font-weight:600}
+.buy-box{display:none;margin-top:16px;padding-top:16px;border-top:1px solid var(--line);font-size:13px;line-height:1.75;color:#4a4540}
+.buy-box p{margin:0 0 8px}
+.buy-box b{color:var(--ink)}
+.qr{width:160px;height:160px;margin:12px auto 8px;border:1px dashed #cfcac2;border-radius:10px;display:flex;align-items:center;justify-content:center;text-align:center;color:#b0aba3;font-size:11.5px;line-height:1.6;padding:12px;background:#fbfaf8}
+.qr-img{display:block;width:180px;max-width:90%;margin:14px auto 8px;border-radius:10px;border:1px solid var(--line)}
+.buy-hint{text-align:center;font-size:11.5px;color:#a09b93}
+
+/* header */
+header{
+  position:sticky;top:0;z-index:20;background:rgba(247,246,243,.92);
+  backdrop-filter:saturate(180%) blur(12px);-webkit-backdrop-filter:saturate(180%) blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.hd{max-width:820px;margin:0 auto;padding:13px 16px 11px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.hd h1{font-size:17px;margin:0;letter-spacing:.3px;font-weight:700}
+.hd .today{font-size:12.5px;color:var(--sub);margin-left:auto;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11px;padding:1.5px 7px;border-radius:999px;border:1px solid var(--line);color:var(--sub);background:#fff}
+
+/* stat */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:16px 0 4px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px 11px}
+.stat b{display:block;font-size:21px;line-height:1.25;font-variant-numeric:tabular-nums;letter-spacing:-.5px}
+.stat span{font-size:11.5px;color:var(--sub)}
+
+/* section */
+section{margin-top:26px}
+h2{font-size:13px;letter-spacing:1.2px;color:var(--sub);margin:0 0 10px;font-weight:600;display:flex;align-items:center;gap:8px}
+h2::after{content:"";flex:1;height:1px;background:var(--line)}
+h2 .cnt{font-weight:400;color:#a09b93;letter-spacing:0}
+
+/* note */
+.note{background:var(--card);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:12px 14px;font-size:14.5px;line-height:1.7}
+.note p{margin:0}
+
+/* timeline */
+.tl{position:relative;padding-left:26px}
+.tl::before{content:"";position:absolute;left:7px;top:8px;bottom:8px;width:1.5px;background:var(--line)}
+.tl-item{position:relative;margin-bottom:10px}
+.tl-dot{position:absolute;left:-24px;top:17px;width:11px;height:11px;border-radius:50%;background:var(--card);border:2.5px solid var(--line)}
+.tl-item.build .tl-dot{border-color:var(--build)}
+.tl-item.defend .tl-dot{border-color:var(--defend)}
+.tl-item.avoid .tl-dot{border-color:var(--avoid)}
+.tl-item.none .tl-dot{border-color:var(--none)}
+.tl-item.past{opacity:.5}
+.tl-item.past .tl-dot{border-color:#c9c5bd}
+
+/* event card */
+.ev{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;box-shadow:var(--sh)}
+.ev-top{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+.ev-date{font-size:12.5px;color:var(--sub);font-variant-numeric:tabular-nums;letter-spacing:.2px}
+.ev-name{font-size:15px;font-weight:650;letter-spacing:.2px;margin-top:5px;line-height:1.4}
+.ev-tag{font-size:10.5px;padding:1px 6px;border-radius:4px;background:#f0eee8;color:var(--sub);letter-spacing:.3px}
+.ev-meta{font-size:12px;color:var(--sub);margin-top:3px;display:flex;gap:8px;flex-wrap:wrap}
+.ev-act{margin-top:7px;font-size:13px;padding-top:7px;border-top:1px dashed var(--line);color:#3a3733}
+.ev-act strong{font-weight:700}
+.ev-act.build strong{color:var(--build)}
+.ev-act.defend strong{color:var(--defend)}
+.ev-act.avoid strong{color:var(--avoid)}
+
+/* live list */
+.live{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+.live-item{display:flex;gap:10px;padding:11px 13px;border-bottom:1px solid #f1efe9;align-items:flex-start}
+.live-item:last-child{border-bottom:none}
+.live-item .b{flex:0 0 auto;margin-top:2px}
+.live-main{min-width:0;flex:1}
+.live-name{font-size:14.5px;font-weight:650;line-height:1.4}
+.live-name em{font-style:normal;font-weight:400;font-size:11.5px;color:var(--sub);margin-left:6px}
+.live-act{font-size:12.6px;margin-top:4px;line-height:1.5;color:#3a3733}
+.live-act strong{font-weight:700}
+.live-act.build strong{color:var(--build)}
+.live-act.defend strong{color:var(--defend)}
+.live-act.avoid strong{color:var(--avoid)}
+
+/* badge */
+.b{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;font-variant-numeric:tabular-nums;letter-spacing:.3px}
+.b.hot{background:#fceae8;color:#b8342b}
+.b.warm{background:#fbf1dc;color:#8c6200}
+.b.cool{background:#e9eef4;color:#33465c}
+.b.dim{background:#f0eee8;color:#7a756d}
+.b.past{background:#f0eee8;color:#a09b93}
+
+/* detail card */
+.det{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-bottom:11px;box-shadow:var(--sh)}
+.det-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin-bottom:9px}
+.det-h .id{font-size:11px;color:#a8a29a;letter-spacing:.4px}
+.det-h h3{font-size:16px;margin:0;font-weight:700;letter-spacing:.2px}
+.det-sub{font-size:12.5px;color:var(--sub);margin-bottom:10px;font-variant-numeric:tabular-nums}
+.kv{font-size:13.5px;line-height:1.7;margin:7px 0}
+.kv b{font-weight:600;color:#4a4540;font-size:12px;letter-spacing:.3px;display:inline-block;margin-right:6px}
+.det blockquote{margin:9px 0;padding:8px 11px;background:#faf9f6;border-left:2.5px solid var(--line);border-radius:0 8px 8px 0;font-size:13px;color:#4a4540}
+.det blockquote b{color:var(--accent)}
+
+/* table */
+table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+th{text-align:left;font-weight:600;font-size:11.5px;color:var(--sub);letter-spacing:.4px;padding:5px 7px;border-bottom:1px solid var(--line);background:#fbfaf8}
+td{padding:6px 7px;border-bottom:1px solid #f0eee8;vertical-align:top;line-height:1.5}
+tr:last-child td{border-bottom:none}
+.tier{font-size:11px;font-weight:700;letter-spacing:.5px;white-space:nowrap}
+.tier.A{color:var(--build)} .tier.B{color:var(--defend)} .tier.C{color:var(--avoid)}
+.code{color:#a8a29a;font-size:11.5px;font-variant-numeric:tabular-nums}
+.tg-h{font-size:11.5px;font-weight:650;letter-spacing:.5px;margin:11px 0 2px;color:#4a4540;display:flex;align-items:baseline;gap:7px}
+.tg-h span{font-weight:400;font-size:10.5px;color:#a09b93;letter-spacing:0}
+.ov{font-size:9.5px;padding:0 4px;border-radius:3px;background:#fbf1dc;color:#8c6200;margin-left:4px;white-space:nowrap}
+.lv{font-size:9.5px;padding:0 4px;border-radius:3px;margin-left:4px;white-space:nowrap;font-weight:600}
+.lv-s{background:#fdecea;color:#b8342b}
+.lv-a{background:#fdf1e0;color:#b06000}
+.lv-b{background:#eef4fb;color:#33506e}
+.lv-co{background:#f1f0ec;color:#8a857c}
+.ov.x{background:#eef4fb;color:#33506e}
+.vs{font-size:9px;padding:0 4px;border-radius:3px;margin-left:4px;white-space:nowrap;font-weight:600;vertical-align:1px}
+.vs.weak{background:#e9f5ee;color:#1f7a4d}
+.cl{background:#fdf6ec;border:1px solid #f0e2c8;border-radius:10px;padding:10px 12px;margin-top:9px;font-size:12.5px;line-height:1.65}
+.cl-t{font-weight:650;color:#8a6d3b;margin-bottom:4px;letter-spacing:.3px}
+.cl-row{color:#5a534a;margin-top:3px}
+.cl b{color:#8a6d3b}
+.vs.strong{background:#fdecea;color:#b8342b}
+.v{font-size:10px;padding:0 5px;border-radius:3px;border:1px solid;letter-spacing:.3px;white-space:nowrap}
+.v.ok{color:#1f7a4d;border-color:#b8ddc9;background:#eef8f2}
+.v.warn{color:#8c6200;border-color:#e8d5a8;background:#fdf7ea}
+.v.dim{color:#8a8a8a;border-color:#e0ddd6;background:#f4f3ef}
+
+/* review */
+.rv{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;margin-bottom:11px;box-shadow:var(--sh)}
+.rv-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.rv-h h3{font-size:15px;margin:0;font-weight:650}
+.flag{font-size:11px;font-weight:700;padding:1.5px 7px;border-radius:5px}
+.flag.ok{background:#e6f4ec;color:var(--ok)}
+.flag.bad{background:#fceae8;color:var(--bad)}
+.flag.na{background:#efeeea;color:var(--na)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:8px 0 10px}
+.cell{background:#fbfaf8;border:1px solid #efede7;border-radius:8px;padding:6px 8px;text-align:center}
+.cell i{display:block;font-style:normal;font-size:10.5px;color:var(--sub);letter-spacing:.3px}
+.cell b{font-size:14.5px;font-variant-numeric:tabular-nums}
+.up{color:#c0392b} .down{color:#1f7a4d}
+
+/* watch */
+.wt{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:11px 13px;margin-bottom:8px}
+.wt-h{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.wt-h .id{font-size:10.5px;color:#a8a29a;letter-spacing:.5px}
+.wt-h b{font-size:14.5px;font-weight:650}
+.wt-h .win{font-size:11.5px;color:var(--defend);background:#fbf1dc;padding:1px 6px;border-radius:4px;margin-left:auto}
+.wt p{margin:5px 0 0;font-size:12.8px;color:#4a4540;line-height:1.6}
+.wt p b{color:var(--sub);font-weight:600;font-size:11.5px;margin-right:4px}
+
+/* footer */
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);font-size:11.5px;color:#a09b93;line-height:1.75}
+footer .fh{font-size:11.5px;font-weight:650;color:#6f6a63;margin:13px 0 3px;letter-spacing:.02em}
+footer .fz{display:block;font-size:11.5px;line-height:1.75;color:#a09b93}
+footer b{color:var(--sub);font-weight:600}
+.lic-line{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+.lic-line .lk{color:#a09b93}
+.lic-line button{margin-left:auto;font-size:11px;color:var(--sub);background:none;border:1px solid var(--line);border-radius:6px;padding:3px 9px;cursor:pointer}
+.disc{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:10.5px;line-height:1.7;color:#a8a29a}
+.disc b{color:#8a857e;font-weight:600}
+
+.empty{background:var(--card);border:1px dashed var(--line);border-radius:12px;padding:14px;font-size:13px;color:var(--sub);text-align:center}
+
+/* movers */
+.mv{margin-top:11px;padding-top:9px;border-top:1px solid var(--line)}
+.mv-h{font-size:11px;color:var(--sub);letter-spacing:.6px;margin-bottom:2px;font-weight:600}
+.mv-row{display:flex;gap:6px;align-items:baseline;font-size:12.5px;line-height:1.5;padding:4px 0;border-bottom:1px dashed #f2f0ea}
+.mv-row:last-of-type{border-bottom:none}
+.mv-row .nm{font-weight:600;white-space:nowrap}
+.mv-row .cd{color:#b0aba3;font-size:10.5px;font-variant-numeric:tabular-nums}
+.mv-row .why{color:#a09b93;font-size:10.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mv-row .pc{margin-left:auto;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.mv-b{font-size:10.5px;color:#b0aba3;margin-top:5px;line-height:1.5}
+
+/* toc */
+.toc{background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:var(--sh)}
+.toc-i{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f1efe9;text-decoration:none;color:inherit;font-size:13px}
+.toc-i:last-child{border-bottom:none}
+.toc-i:active{background:#faf9f6}
+.toc-i .td2{font-size:11.5px;color:var(--sub);font-variant-numeric:tabular-nums;min-width:78px;white-space:nowrap}
+.toc-i .tn{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:550}
+.tl-item:target .ev{outline:2px solid var(--accent);outline-offset:2px}
+
+@media(max-width:560px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .hd h1{font-size:15.5px}
+  .ev-name{font-size:14.5px}
+  body{font-size:14.5px}
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#141413; --card:#1c1c1b; --ink:#eeece7; --sub:#9b968e; --line:#2e2e2c;
+    --accent:#e0665c; --build:#e0665c; --defend:#d6a63b; --avoid:#8fa9c4; --none:#8d9297;
+    --ok:#5dbb8a;
+  }
+  header{background:rgba(20,20,19,.93)}
+  th{background:#232322}
+  .cell{background:#232322;border-color:#2e2e2c}
+  .det blockquote{background:#232322}
+  .ev-tag{background:#262625}
+  .empty{background:#1c1c1b}
+  .lock-input{background:#232322}
+  .lock-input:focus{background:#262625}
+  .qr{background:#232322;border-color:#3a3a37}
+}
+
+/* 数据过期提示条（2026-11-04 加）：定时任务在本环境不可用，页面靠会话内补跑更新，
+   一旦长时间没更新必须自己喊出来，不能让人以为是最新行情 */
+.stale{margin:0 0 14px;padding:11px 14px;border:1px solid #e8c96a;border-left:4px solid #d99b1a;
+  background:#fdf6e3;border-radius:6px;font-size:13.5px;line-height:1.65;color:#6b4c0e}
+.stale b{color:#a5650a;margin-right:6px}
+.stale em{font-style:normal;font-weight:700;color:#8a4b00}
+
+.note-tag{font-size:11.5px;color:var(--muted,#8a8578);letter-spacing:.02em;margin-bottom:5px}
+.note-auto{background:transparent;border-left-color:#c9c3b4}
+.note-old{opacity:.7;border-left-color:#c9a83a;background:#fbf8ef}
+.note-old p{color:#5f5a50}
+.gap-note{margin-top:8px;font-size:12px;color:#9a6a1a}
+/* 逾期未复盘：积压清单，逾期越久越靠上 */
+.od{margin-top:10px}
+.od-row{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+.od-row:last-child{border-bottom:0}
+.od-gap{flex:0 0 62px;font-weight:700;color:#b3261e}
+.od-name{flex:1}
+.od-meta{flex:0 0 auto;color:var(--muted,#8a8578);font-size:12px}
+
+.wt-od{border-left:3px solid #b3261e}
+.od-badge{margin-left:auto;font-size:11.5px;color:var(--muted,#8a8578);white-space:nowrap}
+.od-badge.od-hot{color:#b3261e;font-weight:700}
+.hnote{max-width:820px;margin:0 auto;padding:0 16px 12px;font-size:12.5px;line-height:1.7;color:#6b7280;text-align:left}
+.hnote b{color:#374151;font-weight:600}
+</style>
+</head>
+<body><style>
+#hubbar{position:sticky;top:0;z-index:9999;display:flex;align-items:center;gap:2px;
+background:#0f172a;border-radius:9px;padding:0 10px;height:36px;margin:0 0 14px;
+box-shadow:0 2px 10px rgba(15,23,42,.16);font:12px/1 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#hubbar::-webkit-scrollbar{display:none}
+#hubbar a,#hubbar .hb-cur,#hubbar .hb-home{flex:none;display:inline-flex;align-items:center;
+height:24px;padding:0 10px;border-radius:6px;text-decoration:none;color:#cbd5e1;
+font-size:12px;letter-spacing:.2px;transition:background .13s,color .13s}
+#hubbar a:hover{background:rgba(255,255,255,.1);color:#fff}
+#hubbar .hb-home{color:#94a3b8;font-weight:400;margin-right:2px;padding-left:2px}
+#hubbar .hb-home:hover{background:transparent;color:#e2e8f0}
+#hubbar .hb-sep{flex:none;width:1px;height:14px;background:#334155;margin:0 6px}
+#hubbar .hb-cur{background:#d93630;color:#fff;font-weight:600;cursor:default}
+#hubbar .hb-sp{flex:1 1 auto;min-width:0}
+#hubbar .hb-t{flex:none;color:#64748b;font-size:11px;padding-right:2px;white-space:nowrap}
+@media(max-width:560px){
+#hubbar{height:34px;padding:0 6px;margin:0 0 12px;border-radius:8px}
+#hubbar a,#hubbar .hb-cur,#hubbar .hb-home{height:22px;padding:0 8px;font-size:11.5px}
+/* 390px 宽放不下「← 中心」+ 5 个入口，缩成纯箭头腾出 ~24px，尽量整条不滚动 */
+#hubbar .hb-home{font-size:0;padding:0 6px}
+#hubbar .hb-home::before{content:"←";font-size:14px}
+#hubbar .hb-t{display:none}
+#hubbar .hb-sep{margin:0 3px}
+}
+</style><div id="hubbar"><a class="hb-home" href="index.html" title="返回看板中心" onclick="return __hbGo(event,this.href)">← 中心</a><span class="hb-sep"></span><a href="etf.html" onclick="return __hbGo(event,this.href)">ETF 资金</a><a href="sector.html" onclick="return __hbGo(event,this.href)">板块异动</a><a href="radar.html" onclick="return __hbGo(event,this.href)">板块雷达</a><span class="hb-cur" aria-current="page">事件日历</span><a href="elnino.html" onclick="return __hbGo(event,this.href)">厄尔尼诺</a><a href="commodity.html" onclick="return __hbGo(event,this.href)">商品复盘</a><span class="hb-sp"></span></div><script>window.__hbGo||(function(){
+window.__hbGo=function(e,u){e.preventDefault();
+try{top.location.href=u;}catch(x){location.href=u;}
+return false;};
+/* 移动端 5 个入口超出屏宽，导航条本身可横向滚动。若不主动滚，最右侧的当前项会被裁掉一半，
+   用户第一眼看不到「我在哪一页」。这里只改 hubbar 自己的 scrollLeft，不动整页滚动位置。 */
+document.addEventListener("DOMContentLoaded",function(){
+  var b=document.getElementById("hubbar");
+  if(!b)return;
+  var c=b.querySelector(".hb-cur");
+  if(!c)return;
+  /* 最小滚动：只保证当前项完整露出，不把「← 中心」整条推出视野 */
+  var l=c.offsetLeft, r=l+c.offsetWidth, vl=b.scrollLeft, vr=vl+b.clientWidth;
+  if(r>vr) b.scrollLeft=r-b.clientWidth+6;
+  else if(l<vl) b.scrollLeft=l-6;
+});
+})();</script>
+<noscript><div style="position:fixed;inset:0;z-index:200;background:#f7f6f3;display:flex;align-items:center;justify-content:center;padding:24px;text-align:center;font:15px/1.7 -apple-system,'PingFang SC','Microsoft YaHei',sans-serif;color:#1b1b1b">这个页面需要启用 JavaScript 才能显示，请在浏览器设置里打开后刷新。</div></noscript>
+
+
+<div id="main" style="display:none">
+  <header>
+    <div class="hd">
+      <h1>事件日历</h1>
+      <span class="pill" id="cover"></span>
+      <span class="today" id="today"></span>
+    </div>
+    <p class="hnote">本页排的是<b>事件发生的时点</b>，不是买卖建议。<b>「关注窗口」</b>指事件临近、需要开始看盘的时间段，<b>「待确认」</b>指日期或影响方向尚未确定；卡片里的「<b>不参与／防兑现</b>」是风险提示，不是操作指令。</p>
+  </header>
+  <div class="wrap">
+    <div id="stale" class="stale" hidden></div>
+    <div class="stats" id="stats"></div>
+    <div id="app"></div>
+    <footer id="foot"></footer>
+  </div>
+</div>
+
+<script>
+const PAYLOAD = {};
+const BUILD = "2026-11-26 18:11";
+const ITER = PAYLOAD.iter || 150000;
+const LSKEY = "cal_lic_v1";
+const SAFE = !!(window.crypto && window.crypto.subtle && window.TextEncoder && window.atob && window.Promise);
+let DATA = {"meta": {"version": "V2", "schema": 2, "updated": "2026-11-26", "coverage": ["2026-10-20", "2027-07-17"], "note": "唯一真源。展示层由 render_calendar.py 渲染，不手改展示层。", "confirm_levels": {"官方公告": "主办方/交易所/公司已正式公告日期", "惯例推测": "按历年规律推算，官方未公告，日期可能变", "待定": "只有月份或季度，无具体日期"}, "status_levels": ["待验证", "已兑现", "已失效", "未证实"], "week_note": "**10/30 三季报收官，地雷排完，但没新弹药。** 11 月第一周是「海外定价周」：苹果（11/3）、AMD（11/4）、高通+ARM（11/5）三份财报连着给算力链定调，中间夹 11/3 美国中期选举与乌镇开幕。真正的窗口在 11/11 之后——APEC 深圳（11/18，T-7=11/11 才动）、医保双目录（11/30 前）、珠海航展（12/7）。所以本周只有两个动作：**不追财报当天的高开**（T 日兑现型）；**11/11 前盯深圳国企改革板块的成交量**，没放大到 20 日均值 1.5 倍就不做 APEC。\n\n未来 7 天 7 个事件：11/26 美国 10 月 PCE + Q3（T-0｜A｜待确认）、11/26 亚洲机器人产业链展（深圳）（T-0｜B｜关注窗口）、11/27 第二十四届广州国际车展（T-1｜A｜关注窗口）、11/27 10 月工业企业利润（T-1｜B｜待确认）、11/30 11 月官方制造业 PMI（T-4｜A｜待确认）。 再往后最近的高级别是 12/07 第十六届中国航展（珠海）（T-11，A 级），T-7 起才进窗口。（自动生成 11/26，判断部分见下方人工段）", "action_kinds": {"build": "建仓型：T-N 建 C 档 → T-7 加 A 档 → T 日兑现", "defend": "防守型：只做对冲/避险，不追高，T 日兑现", "avoid": "排雷型：不作为开仓依据，只降仓。事件落地后再看", "none": "只观察：不做个股"}, "verified_at": "2026-10-24", "verify_note": "每条事件的 evidence 记录核实日期、结论（已核／存疑／未核-历史）与来源。未核的只允许是已过期的历史事件；未核实的新事件不入库。", "target_scheme": {"version": 3, "updated": "2026-10-25", "principle": "用大会反推标的，不是用标的找大会。事件是因，标的是果。", "L1": "事件专属链（人工核实实际供货/参会/受益关系）——最准，七姐妹财报+宇树+智元+展会用这个", "L2": "专属概念板块（Tushare 特斯拉/苹果/英伟达概念）——次准，有专属板块时用", "L3": "方向池（8 方向 2808 只）——只做发现探测器，不作标的来源", "why_field": "why 必须是事件关联说明（供货/参会/受益/映射），不能是「行业+涨幅」描述", "audit": "审计器已加硬规则：why 无事件关联词 → 报错，阻止「用标的找大会」混入", "sort": "情绪标的=候选池内按涨幅降序取3（看弹性）；中军=候选池内按成交额降序取3（看容量）。L1人工链只决定候选池，不决定顺序。", "lines": "事件可拆多根业务线（targets.lines），每根线独立 emotion/main；每根线必写 basis（关系性质：供货/映射/合作）。仅当逐线核实到 A 股关联证据才拆线，无证据的线不写。"}, "scope_note": "事件库只收「有确定时间表」的事件；海外财报只收七姐妹（谷歌/亚马逊/苹果/Meta/微软/英伟达/特斯拉），非七姐妹（AMD/高通/应用材料）移入观察项。", "event_level": {"S": "全球顶级（GTC/CES/MWC/WAIC）——必跟，影响全市场 AI/科技链", "A": "国家级·行业顶级（进博会/高交会/乌镇/世界机器人大会）——跟，影响对应产业", "B": "区域·细分产业（南京/深圳/CDCC/液冷展）——选择性跟，只影响细分环节", "公司": "公司级发布会（宇树/智元）——跟个股，影响面窄", "calibrate": "复盘机制：事件结束后记 review.impact（该事件是否带动板块异动，用因果匹配涨停数衡量）。同级别事件多次无影响 → 降级或以后一笔带过。", "配额": "S≤6 / A≤14 / B≤10（每季度）；超配额必须先降级再入库。只约束大会与政策类事件；固定节奏的宏观数据（CPI/PPI/非农/PMI/社零/工业企业利润/FOMC）不占配额，这类事件漏一条就是系统性缺口，不该被配额挤掉", "生效": "2026-11-12 起对未来事件执行；此前事件级别冻结作案例库，不参与配额", "门槛": "S：官方已公告 + 映射链≥3只可核实 + 跨≥2个一级方向；A：官方公告或≥2家权威媒体 + 映射链≥2只；B：官方公告 + 只影响1个细分环节；候选：日期未定/无法验证，只进候选日程"}, "earnings": {"mode": "每日业绩预告扫描（替代「季报截止日」事件），从第一份预告起进入观察期", "data": "Tushare forecast（预告：同比/类型/净利区间）+ income（历史单季净利润）", "dimensions": ["同比：预告 p_change（去年基数）", "扭亏：去年同期亏损、今年盈利", "环比大增：本季单季净利 vs 上季 > +30%", "环比改善：上季亏损/下滑，本季转正或回升", "季节性：本季是否历史同期最高（提示高增可能只是季节规律）"], "sort": "先按同比初筛前20，再对每只做环比+季节性深度判断，输出多维标签", "market_check": "对前20只交叉验证当日是否涨停（涨停=市场认可超预期）"}, "date_model": {"date_start": "主展示日（事件发生日，可不落交易日）", "date_local": "当地时间+时区（海外事件）", "date_cn": "北京时间（数据发布时刻）", "reaction_t": "A股首次反应交易时段（必须落交易日）", "confirm_checked": "日期最近核验时间", "sub_events": "大会关键子事件（报到/开幕/主题演讲/闭幕）", "calendar_layer": "候选（预计/待核）/ 正式（官方确认）", "id_stable": "事件ID不随改期变，日期作为可更新字段，历史另存"}, "week_note_manual": "**10/30 三季报收官，地雷排完，但没新弹药。** 11 月第一周是「海外定价周」：苹果（11/3）、AMD（11/4）、高通+ARM（11/5）三份财报连着给算力链定调，中间夹 11/3 美国中期选举与乌镇开幕。真正的窗口在 11/11 之后——APEC 深圳（11/18，T-7=11/11 才动）、医保双目录（11/30 前）、珠海航展（12/7）。所以本周只有两个动作：**不追财报当天的高开**（T 日兑现型）；**11/11 前盯深圳国企改革板块的成交量**，没放大到 20 日均值 1.5 倍就不做 APEC。", "week_note_auto": "未来 7 天 7 个事件：11/26 美国 10 月 PCE + Q3（T-0｜A｜待确认）、11/26 亚洲机器人产业链展（深圳）（T-0｜B｜关注窗口）、11/27 第二十四届广州国际车展（T-1｜A｜关注窗口）、11/27 10 月工业企业利润（T-1｜B｜待确认）、11/30 11 月官方制造业 PMI（T-4｜A｜待确认）。 再往后最近的高级别是 12/07 第十六届中国航展（珠海）（T-11，A 级），T-7 起才进窗口。（自动生成 11/26，判断部分见下方人工段）", "last_run": "2026-11-26 18:11", "as_of": "2026-11-26 18:11（收盘后）", "week_note_manual_date": "2026-10-30", "scan_gaps": ["2026-11-05", "2026-11-06", "2026-11-09", "2026-11-10", "2026-11-11"], "scan_covered": 9, "level_policy": {"version": 1, "since": "2026-11-12", "quota": {"S": 6, "A": 14, "B": 10}, "strength_map": {"S": "3=全球顶级定价事件 / 5=国家级最高（如五中全会）", "A": "2=国家级行业顶级 / 3=行业顶级且全市场传导", "B": "1=参考 / 2=细分环节有主线", "公司": "2=常规节点 / 3=关键节点（首份财报、新品发布）"}, "archive": {"T+1": "移出「窗口内」「目录」，只留复盘", "T+3": "移出「时间轴」，主视图不显示", "T+30": "移出「已验证因果链」，进折叠的「历史案例库」", "unique": "同一事件只能出现一处（因果链与复盘不重复）"}, "calibrate": "review.impact 连续 3 次「弱」的同级别事件 → 降一级；连续 2 次「强」→ 可升一级（需人工确认后写入）"}, "impact_levels": {"强": "平均超额 ≥ +3pp，事件确实带动标的", "中": "≥ +1.5pp", "弱": "-1.5 ~ +1.5pp，方向不明或标的没跟上", "反向": "≤ -1.5pp，事件有影响但为负向（利好出尽/预期落空）"}, "auto_fill_note": "13 条由官方日历比对补录，watch/invalidate 为通用宏观框架，非事件专属内容；排标的仍需人工"}, "events": [{"id": "E-20261020-01", "name": "GTC 柏林（黄仁勋主题演讲）", "date_start": "2026-10-20", "date_end": "2026-10-22", "type": "产业大会", "confirm": "官方公告", "strength": 3, "sectors": ["人形机器人", "AI算力", "AI 应用", "数据要素"], "entry_window": 7, "watch": "物理 AI 全栈开放（Isaac GR00T/Isaac Lab/Isaac OS/开放数据集）、Agile ONE SN 参考人形机器人、DSX POD 模块化数据中心、自动驾驶 Hyperion、RTX Spark 端侧 AI", "invalidate": "黄仁勋未提物理 AI 或机器人，或仅作为背景提及（无新品发布）。", "targets": {"emotion": [{"code": "301313.SZ", "name": "凡拓数创", "why": "物理AI仿真数据服务商，GTC发布开放数据集直接受益", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "产品发布", "evidence_rank": 3, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "688787.SH", "name": "海天瑞声", "why": "具身智能训练数据服务商，GTC物理AI直接受益", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "300296.SZ", "name": "利亚德", "why": "物理AI+Micro LED，GTC机器人视觉受益", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}], "main": [{"code": "300296.SZ", "name": "利亚德", "why": "物理AI+Micro LED，GTC机器人视觉受益", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "amt": 42.23, "mcap": 169.9, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "301313.SZ", "name": "凡拓数创", "why": "物理AI仿真数据服务商，GTC发布开放数据集直接受益", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "amt": 16.75, "mcap": 48.4, "overlap": true, "evidence_level": "产品发布", "evidence_rank": 3, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "688787.SH", "name": "海天瑞声", "why": "具身智能训练数据服务商，GTC物理AI直接受益", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "amt": 12.96, "mcap": 85.1, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}]}, "status": "已兑现", "action_kind": "build", "date_note": "10/20（周二）—10/22（周四），三个交易日。", "note": "柏林 Tempodrom，10/20—22。黄仁勋 10/21 上午 11:00（北京时间 10/21 17:00）演讲90分钟，发布物理AI全栈、Agile ONE SN参考人形机器人、Microduck机器人现场演示。物理AI概念股此日开始启动（凡拓数创 10/20 连板）。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://blogs.nvidia.com/blog/gtc-berlin-2026-keynote", "https://www.163.com/dy/article/L9PVHO3B05569L3G.html"], "note": "NVIDIA 官方公告。"}, "level": "S", "reaction_t": "2026-10-20", "sub_events": [{"name": "开幕", "date": "2026-10-20"}, {"name": "黄仁勋主题演讲", "date": "2026-10-21", "cn": "2026-10-21 17:00"}, {"name": "闭幕", "date": "2026-10-22"}], "confirm_checked": "2026-10-25", "calendar_layer": "正式", "association": {"event": "GTC 柏林 2026-10-20~22", "linkage": {"verdict": "关联成立", "evidence": "黄仁勋 10/21 演讲明确讲物理AI（Isaac GR00T 全栈、Agile ONE SN 参考人形机器人），凡拓（物理AI仿真数据）、海天瑞声（具身训练数据）、利亚德（物理AI+Micro LED）业务与物理AI直接相关"}, "sequence": {"verdict": "时间顺序存疑", "evidence": "凡拓数创 10/20 首板，早于 10/21 演讲。涨停先于消息公开，要么是预期抢跑/提前埋伏，要么涨停另有原因——不能确认是 GTC 导致上涨"}, "reaction": {"verdict": "广度强，解释力待补", "evidence": "机器人链 10/23 涨停 43 只、成交占比 64%，广度够；但需补完整样本（复权、选股时间、起止日）才能算超额与持续性"}, "hypothesis": "待检验假设（非结论）：事件驱动重「概念纯度」而非「订单确定性」——一次案例不能推通用结论，需分别研究情绪交易与经营受益", "stocks_note": "事后涨幅前几名（凡拓+95.5%等）不应直接成为下一次大会的优先名单，需回测验证"}, "causal_chain_deprecated": {"event": "GTC柏林 2026-10-20~22", "trigger": {"date": "2026-10-21", "who": "黄仁勋主题演讲（90分钟，柏林Tempodrom）", "keywords": ["物理AI", "具身智能", "人形机器人", "Isaac GR00T", "Isaac Lab", "数字孪生"]}, "concept_path": "GTC柏林黄仁勋讲物理AI → 物理AI/具身仿真概念 → 小市值高纯度概念票", "confirmed_stocks": [{"code": "301313.SZ", "name": "凡拓数创", "chg": 95.5, "reason": "物理AI数据+具身仿真+AI数字孪生", "note": "10/20起连板，区间第1"}, {"code": "688787.SH", "name": "海天瑞声", "chg": 77.6, "reason": "具身智能+训练数据"}, {"code": "300296.SZ", "name": "利亚德", "chg": 62.3, "reason": "物理AI+数据+Micro LED"}, {"code": "688071.SH", "name": "华依科技", "chg": 54.8, "reason": "物理AI+IMU"}], "lesson": "黄仁勋讲物理AI，正宗机器人龙头（三花智控/拓普集团）一只没进前五；涨的是小市值、概念纯度高的票（凡拓/海天瑞声）。事件驱动选股要重'概念纯度'而非'订单确定性'。", "timing": "涨停起点10/20 = GTC柏林开幕日，时间完全吻合"}, "review": {"date": "2026-11-11", "abs_T": 13.54, "abs_T1": 14.43, "excess_T": 14.08, "excess_T1": 15.4, "verdict": "当天即有超额：T 日标的均值 +13.54%（超额 +14.08pp），T+1 +14.43%（超额 +15.40pp）", "valid": true, "note": "T=2026-10-20（3 只等权），T+1=2026-10-21；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "self_error": "自动复盘初稿：只核了价格反应，未逐条核对事件是否真的落地（如财报是否超预期、会议是否给出政策）。", "impact": "强", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261022-01", "name": "特斯拉 Q3 财报会", "date_start": "2026-10-22", "date_end": "2026-10-22", "type": "海外财报", "confirm": "官方公告", "strength": 3, "sectors": ["人形机器人", "汽车零部件"], "entry_window": 14, "watch": "Optimus 排产指引（唯一能改变 A 股机器人定价的东西）；资本开支是否上修；FSD/Robotaxi 进展（次要）", "invalidate": "若排产指引仍为「周产几百台」且无 2027 量产锚点，则本事件对供应链不构成催化，只算情绪。", "targets": {"emotion": [{"code": "300115.SZ", "name": "长盈精密", "why": "特斯拉精密结构件供应商，已批量供货", "pct": 14.82, "vs": 13.11, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：特斯拉 Optimus 指尖传感器柔性板、关节结构件合作（机器人供应链横评）"}, {"code": "300709.SZ", "name": "精研科技", "why": "特斯拉 MIM 结构件供应商，配套量产", "pct": 12.84, "vs": 11.13, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：特斯拉 Optimus 灵巧手齿轮箱总成，订单排产至 2026 下半年；互动易确认部分产品已应用于特斯拉"}, {"code": "601689.SH", "name": "拓普集团", "why": "特斯拉底盘结构件核心供应商", "pct": 5.74, "vs": 4.03, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：2016 年起供特斯拉铝合金底盘结构件，Tier0.5 供应商，特斯拉业务占营收 35-40%"}], "main": [{"code": "300750.SZ", "name": "宁德时代", "why": "特斯拉储能电池核心供应商，供货关系", "pct": 7.8, "vs": 6.09, "bench": "沪深300", "bench_chg": 1.71, "amt": 253.96, "mcap": 10123.2, "overlap": false, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：特斯拉 Megapack 储能电池核心供应商（上海储能工厂电芯），2020 年签动力电池长协"}, {"code": "002384.SZ", "name": "东山精密", "why": "特斯拉 PCB/结构件供应商，已批量供货", "pct": 0.63, "vs": -1.08, "bench": "沪深300", "bench_chg": 1.71, "amt": 86.26, "mcap": 1583.5, "overlap": false, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：2016 年起通过 MFLX 供特斯拉软板，特斯拉相关收入占新能源车业务约 75%"}, {"code": "300476.SZ", "name": "胜宏科技", "why": "特斯拉车用 PCB 供应商", "pct": 3.08, "vs": 1.37, "bench": "沪深300", "bench_chg": 1.71, "amt": 56.82, "mcap": 1587.5, "overlap": false, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：特斯拉自动驾驶 PCB 核心供应商，2024 年供 PCB 超 2000 万片"}]}, "status": "已兑现", "review": {"date": "2026-10-24", "abs_T": 0.9, "abs_T1": 8.2, "excess_T": 2.6, "excess_T1": 6.2, "verdict": "催化有效，但我的节奏判断错了", "note": "10/22（T日）沪深300 -1.84%，这批标的平均 +0.9%、超额 +2.6%——抗跌但没赚。10/23（T+1）大盘反弹 +1.71%，板块平均 +8.2%、超额 +6.2%，奥比中光 +18.97%。V1 原判「10/23 大概率回吐」方向错误。", "valid": true, "self_error": "节奏判断错：我写「10/23 大概率回吐」，实际 +8.2%。把「已被提前定价」当成「事件无效」，忽略了 10/22 是大盘 -1.84% 的系统性压制。", "impact": "强", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}, "action_kind": "build", "evidence": {"checked": "2026-10-24", "verdict": "未核-历史", "src": [], "note": "已过事件，本会话未逐步核；复盘数据来自交接包。"}, "top_movers": {"d0": "2026-10-15", "d1": "2026-10-23", "basis": "T-7（2026-10-15）→ T+1（2026-10-23）收盘涨幅；样本＝同花顺涨停池该方向全部涨停股 + 库内标的，共 85 只", "list": [{"code": "301313", "name": "凡拓数创", "chg": 95.48, "why": "物理AI数据+具身仿真+AI数字孪生（10/20 起 2 天 2 板）", "in_lib": false}, {"code": "688787", "name": "海天瑞声", "chg": 77.58, "why": "具身智能+训练数据+数据要素", "in_lib": false}, {"code": "603278", "name": "大业股份", "chg": 77.14, "why": "人形机器人+胎圈钢丝（库内 B 档，原无代码）", "in_lib": true}, {"code": "300296", "name": "利亚德", "chg": 62.31, "why": "物理AI+数据+人形机器人+Micro LED", "in_lib": false}, {"code": "688071", "name": "华依科技", "chg": 54.84, "why": "物理AI+人形机器人+IMU", "in_lib": false}]}, "target_source": "特斯拉 Q3（L1 人工链）", "reaction_t": "2026-10-22", "date_local": {"date": "2026-10-21", "tz": "America/New_York"}, "date_cn": "2026-10-22 04:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S"}, {"id": "E-20261022-02", "name": "宇树生态伙伴大会（杭州）", "date_start": "2026-10-22", "date_end": "2026-10-22", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["人形机器人"], "entry_window": 7, "watch": "新品（人形/四足新机型）、生态伙伴签约、供应链名单", "invalidate": "若会上只发软件/生态、无硬件新品，供应链行情不成立。（注：宇树科技 688836 已于 2026-08-19 上市，不再是「未上市」标的）", "targets": {"emotion": [{"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器国产龙头，宇树配套", "pct": 12.05, "vs": 10.34, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%"}, {"code": "002896.SZ", "name": "中大力德", "why": "宇树减速器核心供应商，已批量供货", "pct": 8.49, "vs": 6.78, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协"}, {"code": "300718.SZ", "name": "长盛轴承", "why": "宇树关节自润滑轴承供应商，已批量供货", "pct": 8.33, "vs": 6.62, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树关节自润滑轴承供应商，渗透率超 80%【注意：机器人业务营收占比不足 1%，商业贡献极小】"}], "main": [{"code": "688836.SH", "name": "宇树科技", "why": "本体厂商，2026-08-19 已上市（688836）", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "amt": 47.7, "mcap": 187.8, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器国产龙头，宇树配套", "pct": 12.05, "vs": 10.34, "bench": "沪深300", "bench_chg": 1.71, "amt": 32.39, "mcap": 531.7, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%"}, {"code": "002896.SZ", "name": "中大力德", "why": "宇树减速器核心供应商，已批量供货", "pct": 8.49, "vs": 6.78, "bench": "沪深300", "bench_chg": 1.71, "amt": 7.82, "mcap": 119.8, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协"}]}, "status": "未证实", "review": {"date": "2026-10-24", "abs_T": 1.0, "abs_T1": 8.4, "excess_T": 2.8, "excess_T1": 6.7, "verdict": "股价有效，但无法归因到本事件", "note": "中大力德 +1.59%/+8.49%、长盛轴承 +0.61%/+8.33%，与特斯拉链同步。但至今未获任何会上的独立信息（无新品发布报道、无签约名单），无法排除只是跟着特斯拉链涨。归入「未证实」。", "valid": null, "self_error": "归因错在把宇树当「未上市」处理。宇树 688836 已于 2026-08-19 上市，本体就在 A 股，应直接看本体而非只炒供应链。", "impact": "强", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}, "action_kind": "build", "evidence": {"checked": "2026-10-24", "verdict": "未核-历史", "src": [], "note": "已过事件，未获会上的独立信息；交接包原判「未证实」，维持。"}, "top_movers": {"d0": "2026-10-15", "d1": "2026-10-23", "basis": "T-7（2026-10-15）→ T+1（2026-10-23）收盘涨幅；样本＝同花顺涨停池该方向全部涨停股 + 库内标的，共 85 只", "list": [{"code": "301313", "name": "凡拓数创", "chg": 95.48, "why": "物理AI数据+具身仿真+AI数字孪生（10/20 起 2 天 2 板）", "in_lib": false}, {"code": "688787", "name": "海天瑞声", "chg": 77.58, "why": "具身智能+训练数据+数据要素", "in_lib": false}, {"code": "603278", "name": "大业股份", "chg": 77.14, "why": "人形机器人+胎圈钢丝（库内 B 档，原无代码）", "in_lib": true}, {"code": "300296", "name": "利亚德", "chg": 62.31, "why": "物理AI+数据+人形机器人+Micro LED", "in_lib": false}, {"code": "688071", "name": "华依科技", "chg": 54.84, "why": "物理AI+人形机器人+IMU", "in_lib": false}]}, "target_source": "宇树链（实际供货）", "level": "公司", "reaction_t": "2026-10-22", "confirm_checked": "2026-10-25", "calendar_layer": "正式"}, {"id": "E-20261022-03", "name": "Meta Q3 财报", "date_start": "2026-10-22", "date_end": "2026-10-22", "type": "海外财报", "confirm": "官方公告", "strength": 2, "sectors": ["AI算力", "AI 应用"], "entry_window": 7, "watch": "广告与 AI 资本开支指引，映射 AI 应用与算力链", "invalidate": "若资本开支指引下修，AI 算力链承压", "targets": {"emotion": [], "main": []}, "status": "已兑现", "action_kind": "none", "note": "美东 10/21 盘后发布（与特斯拉同日），A 股 10/22 反应。七姐妹之一，本轮补录。", "evidence": {"checked": "2026-10-25", "verdict": "已核", "src": "https://investor.atmeta.com", "note": "Meta 官方：10/21 盘后发布 Q3 2026。"}, "reaction_t": "2026-10-22", "date_local": {"date": "2026-10-21", "tz": "America/New_York"}, "date_cn": "2026-10-22 04:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S", "review": {"date": "2026-11-11", "abs_T": null, "abs_T1": null, "excess_T": null, "excess_T1": null, "verdict": "无标的，不做价格复盘", "valid": null, "note": "该事件未设标的（属宏观/政治类），只记录发生，不参与胜率统计。", "impact": "不适用", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261026-01", "name": "二十届五中全会（10/26—10/29，北京）", "date_start": "2026-10-26", "date_end": "2026-10-29", "type": "政策窗口", "confirm": "官方公告", "strength": 5, "level": "S", "sectors": ["党建", "政务信息化（弱）"], "entry_window": 7, "action_kind": "none", "status": "已兑现", "watch": "全会主题为中办文件与党建，非经济议题；关注是否涉及二十一大时间安排", "invalidate": "会期已结束；若后续出现经济议题表述，另立事件跟踪。", "targets": {"emotion": [], "main": []}, "date_note": "新华社 2026-10-29 全会公报确认会期为 10/26—10/29", "note": "审议通过《关于持之以恒推进全面从严治党若干重大问题的决定》，决定二十一大 2027 年下半年召开。不含经济工作部署，A 股无产业映射——建库时按「有产业链映射才入库」的筛法被漏掉，2026-11-11 补录。", "evidence": "新华社 2026-10-29 二十届五中全会公报", "date_local": "2026-10-26", "date_cn": "2026-10-26", "reaction_t": "2026-10-29", "confirm_checked": "2026-11-11", "calendar_layer": "core", "review": {"date": "2026-11-11", "abs_T": null, "abs_T1": null, "excess_T": null, "excess_T1": null, "verdict": "无产业标的；会议期间（10/26—10/29）沪深300 分别 -0.04%/-1.32%/+0.85%/-1.03%，累计 -1.54%，闭幕次日 -1.39%，无正向催化", "valid": false, "note": "党建主题，无产业映射，标的不适用；按指数反应记「无催化」。", "self_error": "建库时漏掉这一条：当时的筛法是「有产业链映射才入库」，把纯政治议程排除在外，导致 10 月最大政治事件缺席。", "impact": "不适用", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261028-01", "name": "美联储 FOMC 议息", "date_start": "2026-10-29", "date_end": "2026-10-29", "date_note": "会议美东 10/27—28（联邦储备系统官方日程，9/15—16 会议确认）。决议 10/28 14:00 美东 = 北京 10/29 02:00，记者会 02:30。A 股首个反应日 10/29，故 date_start 取 10/29。本次非 SEP 会议，无点阵图。", "type": "政策窗口", "confirm": "官方公告", "strength": 2, "sectors": ["黄金", "成长股估值"], "entry_window": 7, "watch": "是否加息、声明措辞、主席发布会表态。CME 数据：10 月维持不变概率 90.6%、加息 25bp 概率 9.4%；12 月加息 25bp 概率 67.5%。9 月已加息 1 码，当前利率 3.75%—4.00%。本次无点阵图，信息量集中在声明与发布会。", "invalidate": "若会前市场已完全定价（点阵图无意外），本事件对 A 股无传导，不作为开仓依据。", "targets": {"emotion": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 4.1, "vs": 2.39, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 1.17, "vs": -0.54, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "600489.SH", "name": "中金黄金", "why": "央企黄金平台，降息直接受益", "pct": 0.58, "vs": -1.13, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}], "main": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 4.1, "vs": 2.39, "bench": "沪深300", "bench_chg": 1.71, "amt": 22.31, "mcap": 667.1, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 1.17, "vs": -0.54, "bench": "沪深300", "bench_chg": 1.71, "amt": 18.54, "mcap": 939.8, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "600489.SH", "name": "中金黄金", "why": "央企黄金平台，降息直接受益", "pct": 0.58, "vs": -1.13, "bench": "沪深300", "bench_chg": 1.71, "amt": 15.85, "mcap": 1011.1, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}]}, "status": "已兑现", "action_kind": "defend", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.cmelitegroup.com/zh-tw/knowledge-hub/fomc-meeting-fed-decision-day/", "http://fedratecalc.com/fomc-meeting-schedule/october-2026", "https://www.toutiao.com/article/7700145257875046954"], "note": "原库写 10/28—29 有误。官方会期为美东 10/27—28，决议北京时间 10/29 凌晨，A 股反应日与原判断一致。"}, "top_movers": {"d0": "2026-10-15", "d1": "2026-10-23", "basis": "T-7（2026-10-15）→ T+1（2026-10-23）收盘涨幅；样本＝库内黄金标的 + 主要金矿股", "list": [{"code": "600988", "name": "赤峰黄金", "chg": 3.19, "why": "弹性最大，但整组无异动", "in_lib": true}, {"code": "600547", "name": "山东黄金", "chg": 2.32, "why": "纯度标的，涨幅微弱", "in_lib": true}, {"code": "000975", "name": "山金国际", "chg": -1.26, "why": "—", "in_lib": false}, {"code": "600489", "name": "中金黄金", "chg": -1.56, "why": "—", "in_lib": true}, {"code": "601899", "name": "紫金矿业", "chg": -2.01, "why": "—", "in_lib": false}], "read": "整组最高仅 +3.19%，说明 FOMC 前资金没有抢跑黄金——印证「防守型事件、不新开仓」的判断。"}, "reaction_t": "2026-10-29", "date_local": {"date": "2026-10-28", "tz": "America/New_York"}, "date_cn": "2026-10-29 02:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S", "review": {"date": "2026-11-11", "abs_T": -2.1, "abs_T1": -4.17, "excess_T": -1.07, "excess_T1": -2.78, "verdict": "反应不明显：T 日标的均值 -2.10%（超额 -1.07pp），T+1 -4.17%（超额 -2.78pp）", "valid": null, "note": "T=2026-10-29（3 只等权），T+1=2026-10-30；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "impact": "反向", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261029-01", "name": "2026 智元创新日（AGIBOT Innovation Day）", "date_start": "2026-10-29", "date_end": "2026-10-29", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["人形机器人", "具身智能模型"], "entry_window": 7, "watch": "29 日上午主论坛，28 日与 29 日下午设工作坊与分论坛（服务生产力／作业生产力／灵巧操作）。围绕「部署态」发布：正向设计的本体与部件、从运动控制到空间移动智能的基座模型、数据飞轮体系、生态融合。关注是否有新本体与供应链名单。", "invalidate": "智元偏「软件+大脑」，若只发布模型不发布硬件，减速器/丝杠链条不成立，只映射模型与传感器。", "targets": {"emotion": [{"code": "688322.SH", "name": "奥比中光", "why": "智元3D视觉感知层供应商，供货关系", "pct": 18.97, "vs": 17.26, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-24 核实：智元创新日 3D 视觉感知层（区间涨幅印证）"}, {"code": "688585.SH", "name": "上纬新材", "why": "智元恒岳持股 58.62% 控股，董事长彭志辉（稚晖君），智元在 A 股唯一上市平台", "pct": 15.88, "vs": 14.17, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "股权关系", "evidence_rank": 5, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-24 WebSearch 核实：智元恒岳持股 58.62%、一致行动人 63.62%"}, {"code": "600699.SH", "name": "均胜电子", "why": "智元 G2 主控板 2025 年批量落地（亿元级订单），头部总成主力配套", "pct": 7.13, "vs": 5.42, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-24 WebSearch 核实：智元 G2 主控板 2025 批量落地（亿元级订单）"}], "main": [{"code": "688322.SH", "name": "奥比中光", "why": "智元3D视觉感知层供应商，供货关系", "pct": 18.97, "vs": 17.26, "bench": "沪深300", "bench_chg": 1.71, "amt": 27.72, "mcap": 345.9, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-24 核实：智元创新日 3D 视觉感知层（区间涨幅印证）"}, {"code": "600699.SH", "name": "均胜电子", "why": "智元 G2 主控板 2025 年批量落地（亿元级订单），头部总成主力配套", "pct": 7.13, "vs": 5.42, "bench": "沪深300", "bench_chg": 1.71, "amt": 19.67, "mcap": 310.3, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-24 WebSearch 核实：智元 G2 主控板 2025 批量落地（亿元级订单）"}, {"code": "688585.SH", "name": "上纬新材", "why": "智元恒岳持股 58.62% 控股，董事长彭志辉（稚晖君），智元在 A 股唯一上市平台", "pct": 15.88, "vs": 14.17, "bench": "沪深300", "bench_chg": 1.71, "amt": 8.82, "mcap": 509.5, "overlap": true, "evidence_level": "股权关系", "evidence_rank": 5, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-24 WebSearch 核实：智元恒岳持股 58.62%、一致行动人 63.62%"}]}, "status": "已兑现", "action_kind": "build", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.cnstock.com/commonDetail/806452", "https://www.yzwb.net/news/ch/202610/t20261021_405132.html"], "note": "正式名称为「智元创新日」，非 Ai Day；地点上海世博中心。9 月第 20000 台通用机器人下线。11/2—3 有 6 台精灵 G2 便利店 24 小时直播。"}, "top_movers": {"d0": "2026-10-15", "d1": "2026-10-23", "basis": "T-7（2026-10-15）→ T+1（2026-10-23）收盘涨幅；样本＝同花顺涨停池该方向全部涨停股 + 库内标的，共 85 只", "list": [{"code": "301313", "name": "凡拓数创", "chg": 95.48, "why": "物理AI数据+具身仿真+AI数字孪生（10/20 起 2 天 2 板）", "in_lib": false}, {"code": "688787", "name": "海天瑞声", "chg": 77.58, "why": "具身智能+训练数据+数据要素", "in_lib": false}, {"code": "603278", "name": "大业股份", "chg": 77.14, "why": "人形机器人+胎圈钢丝（库内 B 档，原无代码）", "in_lib": true}, {"code": "300296", "name": "利亚德", "chg": 62.31, "why": "物理AI+数据+人形机器人+Micro LED", "in_lib": false}, {"code": "688071", "name": "华依科技", "chg": 54.84, "why": "物理AI+人形机器人+IMU", "in_lib": false}]}, "note": "2026-10-24 重排：原 A 档「均胜+拓普」为拍脑袋排序，未核关系。核实后上纬新材为智元控股子公司（58.62%），升 A 档第一；拓普集团与智元无供货关系，降 C。区间涨幅也印证：被降级的 C 档（奥比 +53.7%、汉威 +50.9%）实际跑赢原 A 档（均胜 +20.5%、拓普 +18.0%）。", "target_source": "智元链（实际绑定）", "level": "公司", "reaction_t": "2026-10-29", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "review": {"date": "2026-11-11", "abs_T": -4.3, "abs_T1": -4.59, "excess_T": -3.27, "excess_T1": -3.19, "verdict": "两日持续跑输：T 日标的均值 -4.30%（超额 -3.27pp），T+1 -4.59%（超额 -3.19pp）", "valid": false, "note": "T=2026-10-29（3 只等权），T+1=2026-10-30；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "self_error": "自动复盘初稿：只核了价格反应，未逐条核对事件是否真的落地（如财报是否超预期、会议是否给出政策）。", "impact": "反向", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261029-02", "name": "宇树科技三季报（上市首份）", "date_start": "2026-10-29", "date_end": "2026-10-29", "type": "财报", "confirm": "官方公告", "strength": 3, "sectors": ["人形机器人", "具身智能"], "entry_window": 5, "watch": "H1 营收 11.52 亿（+48.5%）、归母 2.74 亿、扣非 2.44 亿（同比 -19.3%）、毛利率 56%。三季报看：扣非能否转正、出货指引、单价是否被价格战压低。", "invalidate": "若扣非继续负增长且下调出货指引，说明「高增长」叙事被证伪，整条机器人链估值要下修。", "targets": {"emotion": [{"code": "688836.SH", "name": "宇树科技", "why": "本体厂商，2026-08-19 已上市，上市首份财报", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器，宇树配套供应", "pct": 12.05, "vs": 10.34, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%"}, {"code": "002896.SZ", "name": "中大力德", "why": "宇树减速器核心供应商，已批量供货", "pct": 8.49, "vs": 6.78, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协"}], "main": [{"code": "688836.SH", "name": "宇树科技", "why": "本体厂商，定价锚", "pct": 20.0, "vs": 18.29, "bench": "沪深300", "bench_chg": 1.71, "amt": 47.7, "mcap": 187.8, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-10-25", "evidence_src": "待核"}, {"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器供应商", "pct": 12.05, "vs": 10.34, "bench": "沪深300", "bench_chg": 1.71, "amt": 32.39, "mcap": 531.7, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%"}, {"code": "002896.SZ", "name": "中大力德", "why": "宇树减速器供应商", "pct": 8.49, "vs": 6.78, "bench": "沪深300", "bench_chg": 1.71, "amt": 7.82, "mcap": 119.8, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-10-25", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协"}]}, "status": "已兑现", "date_note": "中证网 10/23 报道：宇树三季报预披露日期为 10/29，为上市后首份正式（未经审计）财报。发行价 150.80，10/23 收 624（+20%），总市值 2524 亿，PE(TTM) 432。", "action_kind": "avoid", "note": "与智元创新日同为 10/29，机器人链当天双催化叠加。但 432 倍 PE 的财报是「兑现」不是「起点」，容易见光死——这天不追高，只用来判断链上谁能接棒。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://jnzstatic.cs.com.cn/zzb/htmlInfo/8d5e8c565428d54c055a53e5c221103d.html"], "note": "8/19 已上市，10/23 涨停 20%。三季报预披露 10/29。"}, "target_source": "宇树三季报（L1 人工链）", "reaction_t": "2026-10-29", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "公司", "review": {"date": "2026-11-11", "abs_T": -4.19, "abs_T1": -5.51, "excess_T": -3.16, "excess_T1": -4.12, "verdict": "两日持续跑输：T 日标的均值 -4.19%（超额 -3.16pp），T+1 -5.51%（超额 -4.12pp）", "valid": false, "note": "T=2026-10-29（3 只等权），T+1=2026-10-30；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "self_error": "自动复盘初稿：只核了价格反应，未逐条核对事件是否真的落地（如财报是否超预期、会议是否给出政策）。", "impact": "反向", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261029-03", "name": "微软 + 谷歌财报", "date_start": "2026-10-29", "date_end": "2026-10-29", "type": "海外财报", "confirm": "官方公告", "strength": 3, "sectors": ["AI算力", "云计算", "光模块", "AI应用", "谷歌广告"], "entry_window": 5, "watch": "Azure 与 Google Cloud 增速、AI 资本开支指引（capex 上修利好光模块/液冷，下修则杀估值）", "invalidate": "若两家 capex 指引均未上修且云增速环比放缓，算力链的「需求确定性」叙事被打断，本事件转为利空。", "targets": {"lines": [{"line": "云算力 capex", "basis": "供货关系：微软 Azure / 谷歌云 capex 直接下单光模块、PCB、服务器、液冷", "emotion": [{"code": "300308.SZ", "name": "中际旭创", "why": "谷歌 800G 光模块第一大供应商（份额约 60%）", "pct": 3.82, "vs": 2.11, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：谷歌 800G 第一大供应商，份额 50-60%", "evidence_checked": "2026-10-25", "amt": 279.2, "mcap": 6799.8, "overlap": false}, {"code": "601138.SH", "name": "工业富联", "why": "谷歌 AI 服务器主力代工供应商，云 capex 直接下单", "pct": 1.96, "vs": 0.25, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：谷歌 AI 服务器主力代工厂", "evidence_checked": "2026-10-25", "amt": 50.0, "mcap": 9693.8, "overlap": false}, {"code": "002837.SZ", "name": "英维克", "why": "谷歌数据中心液冷设备供应商", "pct": 1.95, "vs": 0.24, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：谷歌数据中心液冷 CDU 供应商", "evidence_checked": "2026-10-25", "amt": 16.4, "mcap": 503.7, "overlap": false}], "main": [{"code": "300308.SZ", "name": "中际旭创", "why": "谷歌 800G 光模块第一大供应商", "pct": 3.82, "vs": 2.11, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-10-25", "amt": 279.2, "mcap": 6799.8, "overlap": true}, {"code": "300502.SZ", "name": "新易盛", "why": "北美云厂商光模块供应商", "pct": 1.16, "vs": -0.55, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：北美云厂商光模块供应商", "evidence_checked": "2026-10-25", "amt": 213.6, "mcap": 3274.8, "overlap": false}, {"code": "002463.SZ", "name": "沪电股份", "why": "谷歌 TPU 算力板核心供应商（份额约 30%）", "pct": 0.09, "vs": -1.62, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：谷歌 TPU 高端 PCB 核心供应商，份额约 30%", "evidence_checked": "2026-10-25", "amt": 59.9, "mcap": 2058.6, "overlap": false}]}, {"line": "AI 应用（对标 Copilot）", "basis": "业务关联·映射：微软 Copilot 付费席位破 3000 万，验证 B 端 AI 订阅付费，A 股办公 AI 直接对标（非供货）", "emotion": [{"code": "688095.SH", "name": "福昕软件", "why": "PDF 龙头，Foxit AI 对标 Office Copilot", "pct": 7.47, "vs": 5.76, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实：微软 Copilot 对标，Foxit AI", "evidence_checked": "2026-10-25", "amt": 2.6, "mcap": 53.7, "overlap": false}, {"code": "688111.SH", "name": "金山办公", "why": "WPS AI 对标 M365 Copilot，机构公认办公 AI 核心龙头", "pct": 5.1, "vs": 3.39, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实：新闻点名「与 M365 Copilot 直接对标，最受益」", "evidence_checked": "2026-10-25", "amt": 20.4, "mcap": 1155.2, "overlap": false}], "main": [{"code": "688111.SH", "name": "金山办公", "why": "WPS AI 对标 M365 Copilot，办公 AI 龙头", "pct": 5.1, "vs": 3.39, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-10-25", "amt": 20.4, "mcap": 1155.2, "overlap": true}]}, {"line": "谷歌广告", "basis": "业务关联·合作：谷歌广告最高等级合作伙伴，营收高度绑定谷歌广告", "emotion": [{"code": "300058.SZ", "name": "蓝色光标", "why": "谷歌广告最高等级合作伙伴，80% 营收绑定谷歌广告", "pct": 6.23, "vs": 4.52, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实：谷歌全球超级合作伙伴，80% 营收绑定谷歌广告", "evidence_checked": "2026-10-25", "amt": 27.9, "mcap": 433.0, "overlap": false}], "main": [{"code": "300058.SZ", "name": "蓝色光标", "why": "谷歌广告最高等级合作伙伴，80% 营收绑定谷歌广告", "pct": 6.23, "vs": 4.52, "bench": "沪深300", "bench_chg": 1.71, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-10-25", "amt": 27.9, "mcap": 433.0, "overlap": true}]}]}, "status": "已兑现", "action_kind": "build", "date_note": "美东 10/28 盘后（北京 10/29 05:00 前后），A 股首个反应日 10/29。", "note": "美东 10/28 盘后发布，A 股 10/29 反应。与本日 FOMC、智元创新日、宇树三季报四重叠加。拆三线：①云算力 capex（供货，硬）②AI 应用对标 Copilot（映射，非供货）③谷歌广告（合作）。依据 2026-10-25 逐线核实。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.esunsec.com.tw/article/post?postid=f043438c1ac84f329ebdb55825ca94ce"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "target_source": "微软+谷歌（L1 三线拆解：云算力 + AI应用对标 + 谷歌广告）", "reaction_t": "2026-10-29", "date_local": {"date": "2026-10-28", "tz": "America/New_York"}, "date_cn": "2026-10-29 04:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S", "review": {"date": "2026-11-11", "abs_T": -6.93, "abs_T1": -5.29, "excess_T": -5.9, "excess_T1": -3.9, "verdict": "两日持续跑输：T 日标的均值 -6.93%（超额 -5.90pp），T+1 -5.29%（超额 -3.90pp）", "valid": false, "note": "T=2026-10-29（8 只等权），T+1=2026-10-30；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "self_error": "自动复盘初稿：只核了价格反应，未逐条核对事件是否真的落地（如财报是否超预期、会议是否给出政策）。", "impact": "反向", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261030-01", "name": "亚马逊财报", "date_start": "2026-10-30", "date_end": "2026-10-30", "type": "海外财报", "confirm": "官方公告", "strength": 2, "sectors": ["AI算力", "云计算", "液冷"], "entry_window": 5, "watch": "AWS 增速与资本开支；自研芯片（Trainium）对外销售进展", "invalidate": "AWS 增速低于预期且 capex 持平，则对国内算力链无新增催化。", "targets": {"emotion": [{"code": "300866.SZ", "name": "安克创新", "why": "跨境电商龙头，2025 亚马逊平台营收 159 亿占 52.29%", "pct": 1.26, "vs": 2.29, "bench": "沪深300", "bench_chg": -1.03, "evidence_level": "供货关系", "evidence_src": "2026-10-25 核实：亚马逊平台营收占比 52.29%", "evidence_checked": "2026-10-30", "amt": 3.4, "mcap": 347.1, "turn": 0.99}, {"code": "301381.SZ", "name": "赛维时代", "why": "服饰跨境卖家，亚马逊平台收入占 80%，平台生态直接受益", "pct": -1.57, "vs": -0.54, "bench": "沪深300", "bench_chg": -1.03, "evidence_level": "供货关系", "evidence_src": "2026-10-25 核实：亚马逊平台营收占比 80.24%", "evidence_checked": "2026-10-30", "amt": 1.2, "mcap": 94.3, "turn": 1.25}, {"code": "301376.SZ", "name": "致欧科技", "why": "家居跨境卖家，亚马逊平台收入占 69%，平台生态直接受益", "pct": -2.53, "vs": -1.5, "bench": "沪深300", "bench_chg": -1.03, "evidence_level": "供货关系", "evidence_src": "2026-10-25 核实：亚马逊平台营收占比 69.33%", "evidence_checked": "2026-10-30", "amt": 0.7, "mcap": 39.5, "turn": 1.72}], "main": [{"code": "300308.SZ", "name": "中际旭创", "why": "AWS 主力 800G 光模块供应商", "pct": -8.53, "vs": -7.5, "bench": "沪深300", "bench_chg": -1.03, "amt": 194.8, "mcap": 6460.4, "overlap": false, "evidence_level": "供货关系", "evidence_src": "2026-10-25 核实：AWS 主力 800G 供应商", "evidence_checked": "2026-10-30", "turn": 2.93}, {"code": "601138.SH", "name": "工业富联", "why": "AWS AI 服务器头部代工供应商", "pct": -7.03, "vs": -6.0, "bench": "沪深300", "bench_chg": -1.03, "amt": 54.4, "mcap": 8973.5, "overlap": false, "evidence_level": "供货关系", "evidence_src": "2026-10-25 核实：AWS AI 服务器代工", "evidence_checked": "2026-10-30", "turn": 0.59}, {"code": "300502.SZ", "name": "新易盛", "why": "北美云厂商光模块供应商，AWS 大额采购", "pct": -11.06, "vs": -10.03, "bench": "沪深300", "bench_chg": -1.03, "amt": 139.0, "mcap": 2865.8, "overlap": false, "evidence_level": "供货关系", "evidence_src": "2026-10-25 核实：AWS 大额采购", "evidence_checked": "2026-10-30", "turn": 4.69}]}, "status": "已兑现", "action_kind": "build", "date_note": "美东 10/29 盘后，A 股反应日 10/30。", "note": "亚马逊两条关联线：① AWS 云服务（capex→光模块/服务器，通用）② 电商生态（跨境电商卖家，收入 50-80% 依赖亚马逊，特有）。此前只配光模块，漏了跨境电商这条更硬的关联。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.esunsec.com.tw/article/post?postid=f043438c1ac84f329ebdb55825ca94ce"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "target_source": "亚马逊双线（L1）：跨境电商 + AWS算力", "reaction_t": "2026-10-30", "date_local": {"date": "2026-10-29", "tz": "America/New_York"}, "date_cn": "2026-10-30 04:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S", "review": {"date": "2026-11-11", "abs_T": -3.94, "abs_T1": -0.51, "excess_T": -2.55, "excess_T1": -1.3, "verdict": "反应不明显：T 日标的均值 -3.94%（超额 -2.55pp），T+1 -0.51%（超额 -1.30pp）", "valid": null, "note": "T=2026-10-30（6 只等权），T+1=2026-11-02；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "impact": "反向", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261102-01", "name": "世界互联网大会乌镇峰会", "date_start": "2026-11-03", "date_end": "2026-11-05", "date_note": "官方：11/2 报到（部分嘉宾参加零日活动）、11/3 上午开幕式+下午主论坛、11/4 全天分论坛、11/5 上午分论坛与闭幕发布会。交易影响日取开幕日 11/3，date_start=11/03，窗口按 11/3 倒推（T-7=10/27）。", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["AI 应用", "数据要素", "网络安全", "时空智能"], "entry_window": 7, "watch": "27 场分论坛，明确含「机器人与具身智能」「智能体互信互联互操作」「时空智能」。主论坛设「人工智能乌镇对话」。「互联网之光」博览会 11/2—5 同期，670 余家企业、1000 余项成果、20 余款产品首发；智元、优必选、宇树等具身智能机器人参展。关注：是否有政策文件或国家标准发布。", "invalidate": "若开幕当日无重量级发布（无政策文件、无国家标准），只是常规论坛，按 T 日兑现处理，不恋战。", "targets": {"emotion": [{"code": "002230.SZ", "name": "科大讯飞", "why": "AI应用龙头，乌镇峰会主论坛参与方，AI应用直接受益", "pct": -0.05, "vs": 0.15, "bench": "沪深300", "bench_chg": -0.2, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "amt": 7.6, "mcap": 850.9, "turn": 0.89}, {"code": "300418.SZ", "name": "昆仑万维", "why": "AI应用/大模型，乌镇峰会主论坛参与方，AI应用受益", "pct": 0.22, "vs": 0.42, "bench": "沪深300", "bench_chg": -0.2, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "amt": 21.5, "mcap": 425.4, "turn": 4.98}, {"code": "688111.SH", "name": "金山办公", "why": "AI 应用公司，乌镇峰会 AI 应用方向，非供货关系（业务关联）", "pct": 2.27, "vs": 2.47, "bench": "沪深300", "bench_chg": -0.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "amt": 13.1, "mcap": 1042.1, "turn": 1.27}], "main": [{"code": "688111.SH", "name": "金山办公", "why": "AI 应用公司，乌镇峰会 AI 应用方向，非供货关系（业务关联）", "pct": 2.27, "vs": 2.47, "bench": "沪深300", "bench_chg": -0.2, "overlap": true, "amt": 13.1, "mcap": 1042.1, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 1.27}, {"code": "002230.SZ", "name": "科大讯飞", "why": "AI应用龙头，乌镇峰会主论坛参与方，AI应用直接受益", "pct": -0.05, "vs": 0.15, "bench": "沪深300", "bench_chg": -0.2, "amt": 7.6, "mcap": 850.9, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 0.89}, {"code": "601360.SH", "name": "三六零", "why": "AI安全/大模型，峰会参与方，AI应用受益", "pct": -0.75, "vs": -0.55, "bench": "沪深300", "bench_chg": -0.2, "overlap": false, "amt": 5.5, "mcap": 559.3, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 0.98}]}, "status": "已兑现", "action_kind": "build", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://cn.wicinternet.org/2026-09/29/content_39028113.htm", "https://www.zjwx.gov.cn/col/col1694600/art/2026/art_f5ef3c5ea914b5dbdf5a0b133ae39044.html", "https://zj.cnr.cn/zjyw/20261020/t20261020_527847301.shtml"], "note": "官方发布会与参会须知均确认 11/2—5、3 日开幕。原库 date_start=11/2 为报到日，已按交易影响日修正为 11/3。"}, "target_source": "乌镇（L1 人工链）", "level": "A", "reaction_t": "2026-11-03", "sub_events": [{"name": "报到", "date": "2026-11-02"}, {"name": "开幕式", "date": "2026-11-03"}], "confirm_checked": "2026-10-25", "calendar_layer": "正式", "review": {"date": "2026-11-11", "abs_T": 0.42, "abs_T1": 3.1, "excess_T": 0.62, "excess_T1": 0.8, "verdict": "反应不明显：T 日标的均值 +0.42%（超额 +0.62pp），T+1 +3.10%（超额 +0.80pp）", "valid": null, "note": "T=2026-11-03（4 只等权），T+1=2026-11-04；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "impact": "弱", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261103-01", "name": "苹果财报", "date_start": "2026-11-03", "date_end": "2026-11-03", "type": "海外财报", "confirm": "官方公告", "strength": 3, "sectors": ["消费电子", "果链", "AI手机"], "entry_window": 5, "watch": "iPhone 出货与指引、AI 功能（Apple Intelligence）落地节奏、大中华区收入", "invalidate": "若大中华区继续负增长且 AI 功能延期，果链无催化，本事件降级为情绪。", "targets": {"emotion": [{"code": "300115.SZ", "name": "长盈精密", "why": "果链精密结构件供应商", "pct": 11.36, "vs": 10.57, "bench": "沪深300", "bench_chg": 0.79, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-02", "evidence_src": "2026-10-25 核实：特斯拉 Optimus 指尖传感器柔性板、关节结构件合作（机器人供应链横评）", "amt": 28.8, "mcap": 395.3, "turn": 7.67}, {"code": "002475.SZ", "name": "立讯精密", "why": "苹果组装核心供应商，果链龙头", "pct": -0.72, "vs": -1.51, "bench": "沪深300", "bench_chg": 0.79, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-02", "evidence_src": "2026-10-25 核实：苹果 AirPods Pro 组装份额 100%（事实独家）、iPhone 组装主力约 45%", "amt": 36.2, "mcap": 3318.5, "turn": 1.08}, {"code": "002384.SZ", "name": "东山精密", "why": "苹果 FPC/PCB 供应商，批量供货", "pct": 7.13, "vs": 6.34, "bench": "沪深300", "bench_chg": 0.79, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-02", "evidence_src": "2026-10-25 核实：2016 年起通过 MFLX 供特斯拉软板，特斯拉相关收入占新能源车业务约 75%", "amt": 119.3, "mcap": 1278.2, "turn": 9.33}], "main": [{"code": "002384.SZ", "name": "东山精密", "why": "苹果 FPC/PCB 供应商", "pct": 7.13, "vs": 6.34, "bench": "沪深300", "bench_chg": 0.79, "amt": 119.3, "mcap": 1278.2, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-02", "evidence_src": "2026-10-25 核实：2016 年起通过 MFLX 供特斯拉软板，特斯拉相关收入占新能源车业务约 75%", "turn": 9.33}, {"code": "002475.SZ", "name": "立讯精密", "why": "苹果组装核心供应商", "pct": -0.72, "vs": -1.51, "bench": "沪深300", "bench_chg": 0.79, "amt": 36.2, "mcap": 3318.5, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-02", "evidence_src": "2026-10-25 核实：苹果 AirPods Pro 组装份额 100%（事实独家）、iPhone 组装主力约 45%", "turn": 1.08}, {"code": "600584.SH", "name": "长电科技", "why": "苹果芯片封测供应商", "pct": 2.65, "vs": 1.86, "bench": "沪深300", "bench_chg": 0.79, "amt": 32.8, "mcap": 900.1, "overlap": false, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-02", "evidence_src": "2026-10-25 核实：苹果 SiP 封装全球最大供应商之一，代工 iPhone/iPad 电源管理芯片", "turn": 3.68}]}, "status": "已兑现", "action_kind": "build", "date_note": "美东 11/02 盘后，A 股反应日 11/03。", "note": "美东 11/02 盘后，A 股 11/03 反应。与乌镇峰会开幕同日，AI 应用与消费电子在同一天争夺资金。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.esunsec.com.tw/article/post?postid=f043438c1ac84f329ebdb55825ca94ce"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "target_source": "苹果（L1 人工链）", "reaction_t": "2026-11-03", "date_local": {"date": "2026-11-02", "tz": "America/New_York"}, "date_cn": "2026-11-03 05:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S", "review": {"date": "2026-11-11", "abs_T": -3.08, "abs_T1": 8.42, "excess_T": -2.88, "excess_T1": 6.12, "verdict": "延迟反应（T 日先跌、T+1 才涨），方向存疑：T 日标的均值 -3.08%（超额 -2.88pp），T+1 +8.42%（超额 +6.12pp）", "valid": null, "note": "T=2026-11-03（4 只等权），T+1=2026-11-04；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "impact": "中", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261103-03", "name": "美国中期选举", "date_start": "2026-11-03", "date_end": "2026-11-03", "date_note": "法定：11 月第一个星期一之后的星期二，2026 年为 11/3（周二）。改选众议院 435 席全数、参议院 35 席、39 个州长。结果多在美东当晚至次日凌晨明朗，对 A 股是 11/4 开盘前的隔夜变量。", "type": "海外宏观", "confirm": "官方公告", "strength": 2, "sectors": ["对美出口", "半导体设备", "关税敏感"], "entry_window": 5, "watch": "看两院归属：共和党若丢众议院 → 关税与出口管制推进受阻，对美链压力缓解；若共和党守住两院 → 关税工具继续，出口链承压。另看两党对华技术限制的立法议程是否进入排期。", "invalidate": "若选举结果无争议、国会分裂格局与选前预期一致，则对 A 股无增量信息，按常规隔夜波动处理，不调仓、不选股。", "targets": {}, "status": "待验证", "action_kind": "defend", "evidence": {"checked": "2026-10-29", "verdict": "已核", "src": ["https://www.ncsl.org/elections-and-campaigns/2026-state-legislative-elections", "https://www.fec.gov/resources/cms-content/documents/2026-election-dates.pdf"], "note": "日期由联邦法律确定（11 月首个周一后的周二），无公告变动风险。影响路径为关税/出口管制预期，非 A 股直接事件。"}, "note": "防守型事件：作用是调整对美敞口，不是选股。与 11/18 APEC 连起来看，11 月上半月是「美国政治 → 中国主场外交」的连续窗口。", "level": "A", "reaction_t": "2026-11-03", "confirm_checked": "2026-10-29", "calendar_layer": "正式", "review": {"date": "2026-11-11", "abs_T": null, "abs_T1": null, "excess_T": null, "excess_T1": null, "verdict": "无标的，不做价格复盘", "valid": null, "note": "该事件未设标的（属宏观/政治类），只记录发生，不参与胜率统计。", "impact": "不适用", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261105-01", "name": "第九届进博会（上海）", "date_start": "2026-11-05", "date_end": "2026-11-10", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["工业机器人", "机器视觉", "汽车智能化"], "entry_window": 7, "watch": "技术装备展区（AI、机器人、工业自动化）、480 件首发首展（历年最高）", "invalidate": "进博是「展品驱动」，若首发名单里无 A 股可映射的新技术，本事件无交易价值。", "targets": {"emotion": [{"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器国产龙头，进博会参展", "pct": -3.63, "vs": -3.43, "bench": "沪深300", "bench_chg": -0.2, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%", "amt": 19.7, "mcap": 474.9, "turn": 4.01}, {"code": "002747.SZ", "name": "埃斯顿", "why": "工业机器人整机龙头，进博会主参展商", "pct": -4.97, "vs": -4.77, "bench": "沪深300", "bench_chg": -0.2, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "amt": 18.4, "mcap": 216.0, "turn": 8.29}, {"code": "300607.SZ", "name": "拓斯达", "why": "工业机器人/自动化，进博会参展", "pct": -6.66, "vs": -6.46, "bench": "沪深300", "bench_chg": -0.2, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "amt": 6.2, "mcap": 92.4, "turn": 6.56}], "main": [{"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器国产龙头，进博会参展", "pct": -3.63, "vs": -3.43, "bench": "沪深300", "bench_chg": -0.2, "amt": 19.7, "mcap": 474.9, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%", "turn": 4.01}, {"code": "002747.SZ", "name": "埃斯顿", "why": "工业机器人整机龙头，进博会主参展商", "pct": -4.97, "vs": -4.77, "bench": "沪深300", "bench_chg": -0.2, "amt": 18.4, "mcap": 216.0, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 8.29}, {"code": "300607.SZ", "name": "拓斯达", "why": "工业机器人/自动化，进博会参展", "pct": -6.66, "vs": -6.46, "bench": "沪深300", "bench_chg": -0.2, "amt": 6.2, "mcap": 92.4, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 6.56}]}, "status": "已兑现", "action_kind": "build", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://ciie.org/", "https://www.ciie.org/zbh/bqgffb/20261010/64405.html"], "note": "官网确认 2026/11/5—10 国家会展中心（上海）。11/8—10 对社会观众开放。"}, "target_source": "进博会（L1 人工链）", "level": "A", "reaction_t": "2026-11-05", "sub_events": [{"name": "开幕式", "date": "2026-11-05"}, {"name": "展期", "date": "2026-11-05", "end": "2026-11-10"}], "confirm_checked": "2026-10-25", "calendar_layer": "正式", "review": {"date": "2026-11-11", "abs_T": 2.07, "abs_T1": -3.62, "excess_T": 1.77, "excess_T1": -2.18, "verdict": "当天即有超额：T 日标的均值 +2.07%（超额 +1.77pp），T+1 -3.62%（超额 -2.18pp）", "valid": true, "note": "T=2026-11-05（3 只等权），T+1=2026-11-06；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "self_error": "自动复盘初稿：只核了价格反应，未逐条核对事件是否真的落地（如财报是否超预期、会议是否给出政策）。", "impact": "弱", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261109-01", "name": "10 月 CPI / PPI", "date_start": "2026-11-09", "date_end": "2026-11-09", "type": "宏观数据", "confirm": "官方公告", "strength": 1, "sectors": ["消费", "周期"], "entry_window": 3, "watch": "PPI 是否转正（决定周期股逻辑）；CPI 与核心 CPI 缺口", "invalidate": "弱催化，不单独作为开仓依据。", "targets": {"emotion": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 1.16, "vs": 1.36, "bench": "沪深300", "bench_chg": -0.2, "amt": 24.6, "mcap": 522.5, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 4.62}, {"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 2.27, "vs": 2.47, "bench": "沪深300", "bench_chg": -0.2, "amt": 72.4, "mcap": 5655.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 1.29}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 1.67, "vs": 1.87, "bench": "沪深300", "bench_chg": -0.2, "amt": 18.6, "mcap": 838.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 2.21}], "main": [{"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 2.27, "vs": 2.47, "bench": "沪深300", "bench_chg": -0.2, "amt": 72.4, "mcap": 5655.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 1.29}, {"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 1.16, "vs": 1.36, "bench": "沪深300", "bench_chg": -0.2, "amt": 24.6, "mcap": 522.5, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 4.62}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 1.67, "vs": 1.87, "bench": "沪深300", "bench_chg": -0.2, "amt": 18.6, "mcap": 838.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 2.21}]}, "status": "已兑现", "date_note": "国家统计局 2026 年发布日程表：11 月 9 日（周一）9:30 发布 10 月 CPI／PPI。", "action_kind": "none", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.stats.gov.cn/sj/fbrc/bnxxfb/"], "note": "原标「惯例推测」，统计局已公布年度日程，升为官方公告。11/9 为周一，交易日。"}, "reaction_t": "2026-11-09", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A", "review": {"date": "2026-11-11", "abs_T": 1.43, "abs_T1": 0.58, "excess_T": 1.38, "excess_T1": 0.5, "verdict": "反应不明显：T 日标的均值 +1.43%（超额 +1.38pp），T+1 +0.58%（超额 +0.50pp）", "valid": null, "note": "T=2026-11-09（3 只等权），T+1=2026-11-10；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "impact": "弱", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261109-02", "name": "美国 10 月非农", "date_start": "2026-11-09", "date_end": "2026-11-09", "type": "海外宏观", "confirm": "官方公告", "strength": 2, "sectors": ["黄金", "汇率", "成长股估值"], "entry_window": 5, "watch": "新增就业、失业率、时薪增速；前值修订", "invalidate": "单次非农对 A 股传导有限，只在明显偏离预期（>5 万或负值）时才有方向意义。", "targets": {"emotion": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 1.16, "vs": 1.36, "bench": "沪深300", "bench_chg": -0.2, "amt": 24.6, "mcap": 522.5, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 4.62}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 1.67, "vs": 1.87, "bench": "沪深300", "bench_chg": -0.2, "amt": 18.6, "mcap": 838.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 2.21}, {"code": "002155.SZ", "name": "湖南黄金", "why": "小市值黄金，降息受益弹性", "pct": -1.18, "vs": -0.98, "bench": "沪深300", "bench_chg": -0.2, "amt": 8.0, "mcap": 274.4, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 2.86}], "main": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 1.16, "vs": 1.36, "bench": "沪深300", "bench_chg": -0.2, "amt": 24.6, "mcap": 522.5, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 4.62}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 1.67, "vs": 1.87, "bench": "沪深300", "bench_chg": -0.2, "amt": 18.6, "mcap": 838.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 2.21}, {"code": "002155.SZ", "name": "湖南黄金", "why": "小市值黄金，降息受益弹性", "pct": -1.18, "vs": -0.98, "bench": "沪深300", "bench_chg": -0.2, "amt": 8.0, "mcap": 274.4, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-04", "evidence_src": "待核", "turn": 2.86}]}, "status": "已兑现", "action_kind": "none", "date_note": "北京 11/06 21:30 公布，A 股反应日 11/09。与国内 10 月 CPI 同日。", "note": "美东 11/06（周五）08:30 发布 = 北京 11/06 21:30，A 股已收盘，首个反应日 11/09（周一）。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.bls.gov/schedule/2026/11_sched_list.htm"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "reaction_t": "2026-11-09", "date_local": {"date": "2026-11-06", "tz": "America/New_York"}, "date_cn": "2026-11-06 21:30", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A", "review": {"date": "2026-11-11", "abs_T": 1.43, "abs_T1": 0.9, "excess_T": 1.38, "excess_T1": 0.82, "verdict": "反应不明显：T 日标的均值 +1.43%（超额 +1.38pp），T+1 +0.90%（超额 +0.82pp）", "valid": null, "note": "T=2026-11-09（3 只等权），T+1=2026-11-10；基准沪深300。机器初判规则：任一超额 ≥1.5pp 记有效，两日均 ≤-1.5pp 记无效，其余记中性。", "impact": "弱", "impact_rule": "mean(excess_T, excess_T1)：≥+3 强 / ≥+1.5 中 / ≤-1.5 反向 / 其余弱"}}, {"id": "E-20261111-01", "name": "双十一", "date_start": "2026-11-11", "date_end": "2026-11-11", "type": "消费节点", "confirm": "惯例推测", "strength": 1, "sectors": ["美妆", "家电", "快递"], "entry_window": 3, "watch": "预售数据、超预期单品", "invalidate": "近几年对股价拉动越来越弱，只做个股行情，不做板块。", "targets": {"emotion": [{"code": "000333.SZ", "name": "美的集团", "why": "家电龙头，双十一销售直接受益", "pct": -0.96, "vs": -1.37, "bench": "沪深300", "bench_chg": 0.41, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "amt": 17.0, "mcap": 6038.3, "turn": 0.28}, {"code": "603605.SH", "name": "珀莱雅", "why": "美妆，双十一直接受益", "pct": -0.59, "vs": -1.0, "bench": "沪深300", "bench_chg": 0.41, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "amt": 1.8, "mcap": 194.2, "turn": 0.95}, {"code": "000651.SZ", "name": "格力电器", "why": "家电，双十一直接受益", "pct": -1.13, "vs": -1.54, "bench": "沪深300", "bench_chg": 0.41, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "amt": 9.6, "mcap": 2131.3, "turn": 0.45}], "main": [{"code": "000333.SZ", "name": "美的集团", "why": "家电龙头，双十一销售直接受益", "pct": -0.96, "vs": -1.37, "bench": "沪深300", "bench_chg": 0.41, "amt": 17.0, "mcap": 6038.3, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 0.28}, {"code": "000651.SZ", "name": "格力电器", "why": "家电，双十一直接受益", "pct": -1.13, "vs": -1.54, "bench": "沪深300", "bench_chg": 0.41, "amt": 9.6, "mcap": 2131.3, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 0.45}]}, "status": "待验证", "action_kind": "build", "note": "非主线事件。近几年双十一对板块拉动很弱，只做个股（超预期单品），不做板块。", "date_note": "11/11 为固定商业日期，无官方公告主体，按惯例推测标注。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": [], "note": "日期本身无争议（11/11，周三，交易日）；确定性档位由「官方公告」下调为「惯例推测」，因为不存在发布公告的主体。"}, "target_source": "双十一（L1 人工链）", "reaction_t": "2026-11-11", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "B"}, {"id": "E-20261111-02", "name": "美国 10 月 CPI", "date_start": "2026-11-11", "date_end": "2026-11-11", "type": "海外宏观", "confirm": "官方公告", "strength": 3, "sectors": ["黄金", "成长股估值", "有色"], "entry_window": 5, "watch": "CPI 同比（前值 3.7%）、核心 CPI；是否强化 12 月加息预期", "invalidate": "若核心 CPI 回落至 3% 以下，12 月加息预期降温，利好成长与黄金；反之压制估值。", "targets": {"emotion": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 1.68, "vs": 1.27, "bench": "沪深300", "bench_chg": 0.41, "amt": 16.6, "mcap": 653.9, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 2.6}, {"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": -1.14, "vs": -1.55, "bench": "沪深300", "bench_chg": 0.41, "amt": 40.5, "mcap": 5739.7, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 0.71}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": -1.3, "vs": -1.71, "bench": "沪深300", "bench_chg": 0.41, "amt": 14.0, "mcap": 963.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 1.47}], "main": [{"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": -1.14, "vs": -1.55, "bench": "沪深300", "bench_chg": 0.41, "amt": 40.5, "mcap": 5739.7, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 0.71}, {"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 1.68, "vs": 1.27, "bench": "沪深300", "bench_chg": 0.41, "amt": 16.6, "mcap": 653.9, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 2.6}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": -1.3, "vs": -1.71, "bench": "沪深300", "bench_chg": 0.41, "amt": 14.0, "mcap": 963.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-11", "evidence_src": "待核", "turn": 1.47}]}, "status": "待验证", "action_kind": "defend", "date_note": "北京 11/10 21:30 公布，A 股反应日 11/11。与双十一同日。", "note": "美东 11/10（周二）08:30 = 北京 11/10 21:30，A 股首个反应日 11/11（周三）。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.bls.gov/schedule/2026/11_sched_list.htm"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "reaction_t": "2026-11-11", "date_local": {"date": "2026-11-10", "tz": "America/New_York"}, "date_cn": "2026-11-10 21:30", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A"}, {"id": "E-20261120-01", "name": "高交会（第二十八届，深圳）", "date_start": "2026-11-13", "date_end": "2026-11-15", "type": "产业大会", "confirm": "惯例推测", "strength": 2, "sectors": ["AI", "机器人", "低空经济"], "entry_window": 7, "watch": "每年 11 月中旬，主题每年漂移，2026 大概率偏 AI+机器人+低空", "invalidate": "日期未公告，不能算埋伏窗口。日期确认后才准入。", "targets": {"emotion": [], "main": []}, "status": "待验证", "action_kind": "none", "date_note": "2026 年为第二十八届。展会参观指南预告 11/13—15 深圳国际会展中心（宝安），据此按惯例推测填 11/13（周五，交易日）；另有来源写 11/26—28，存在冲突，官方公告后再校正。", "evidence": {"checked": "2026-10-24", "verdict": "存疑", "src": ["https://www.chtf.com/public/word/2025Visitor_Guide.pdf", "http://www.cme-expo.cn/energy/"], "note": "原库无日期。检索到两个互斥日期（11/13—15 与 11/26—28），且原库「第二十七届」年份错位（27 届在 2025 年）。暂填 11/13，标待定。"}, "note": "日期与展区尚未官方确认，暂不排标的，标为观察型。", "level": "A", "reaction_t": "2026-11-13", "confirm_checked": "2026-10-25", "calendar_layer": "正式"}, {"id": "E-20261115-01", "name": "10 月社零 / 工业增加值", "date_start": "2026-11-16", "date_end": "2026-11-16", "type": "宏观数据", "confirm": "官方公告", "strength": 2, "sectors": ["消费", "顺周期"], "entry_window": 3, "watch": "社零（9 月 +1.1%，剔除汽车 +3.9%）、工业增加值（9 月 +5.5%）", "invalidate": "数据出来当天做方向，不做个股。若社零继续弱，资金会更集中到科技主线——这对科技是利好。", "targets": {"emotion": [], "main": [{"code": "600519.SH", "name": "贵州茅台", "why": "白酒龙头，消费风向标", "pct": 0.23, "vs": 0.79, "bench": "沪深300", "bench_chg": -0.56, "amt": 26.4, "mcap": 17983.0, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.15}, {"code": "600887.SH", "name": "伊利股份", "why": "乳业龙头，社零数据直接映射", "pct": 0.28, "vs": 0.84, "bench": "沪深300", "bench_chg": -0.56, "amt": 11.3, "mcap": 2003.4, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.57}, {"code": "601888.SH", "name": "中国中免", "why": "免税龙头，消费复苏弹性", "pct": -0.66, "vs": -0.1, "bench": "沪深300", "bench_chg": -0.56, "amt": 3.6, "mcap": 1004.7, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.35}]}, "status": "待验证", "date_note": "国家统计局 2026 年发布日程表：11 月 16 日（周一）10:00 发布 10 月国民经济运行情况（含社零、工业增加值、固投）。", "action_kind": "none", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.stats.gov.cn/sj/fbrc/bnxxfb/"], "note": "原标「惯例推测」，日程表已明确 11/16，升为官方公告。11/16 为周一，交易日。"}, "reaction_t": "2026-11-16", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A"}, {"id": "E-20261116-01", "name": "美国 10 月 PPI", "date_start": "2026-11-16", "date_end": "2026-11-16", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "sectors": ["周期", "有色"], "entry_window": 5, "watch": "PPI 环比与同比，验证上游通胀是否二次抬头", "invalidate": "弱催化，不单独作为开仓依据。", "targets": {"emotion": [{"code": "601888.SH", "name": "中国中免", "why": "免税龙头，消费复苏弹性", "pct": -0.66, "vs": -0.1, "bench": "沪深300", "bench_chg": -0.56, "amt": 3.6, "mcap": 1004.7, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.35}, {"code": "600887.SH", "name": "伊利股份", "why": "乳业龙头，社零数据的直接映射", "pct": 0.28, "vs": 0.84, "bench": "沪深300", "bench_chg": -0.56, "amt": 11.3, "mcap": 2003.4, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.57}, {"code": "600519.SH", "name": "贵州茅台", "why": "白酒龙头，消费数据风向标", "pct": 0.23, "vs": 0.79, "bench": "沪深300", "bench_chg": -0.56, "amt": 26.4, "mcap": 17983.0, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.15}], "main": [{"code": "600519.SH", "name": "贵州茅台", "why": "白酒龙头，消费数据风向标", "pct": 0.23, "vs": 0.79, "bench": "沪深300", "bench_chg": -0.56, "amt": 26.4, "mcap": 17983.0, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.15}, {"code": "600887.SH", "name": "伊利股份", "why": "乳业龙头，社零数据的直接映射", "pct": 0.28, "vs": 0.84, "bench": "沪深300", "bench_chg": -0.56, "amt": 11.3, "mcap": 2003.4, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.57}, {"code": "601888.SH", "name": "中国中免", "why": "免税龙头，消费复苏弹性", "pct": -0.66, "vs": -0.1, "bench": "沪深300", "bench_chg": -0.56, "amt": 3.6, "mcap": 1004.7, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-16", "evidence_src": "待核", "turn": 0.35}]}, "status": "待验证", "action_kind": "none", "date_note": "北京 11/13 21:30 公布，A 股反应日 11/16。与国内社零同日。", "note": "美东 11/13（周五）08:30 = 北京 11/13 21:30，A 股首个反应日 11/16（周一）。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.bls.gov/schedule/2026/11_sched_list.htm"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "reaction_t": "2026-11-16", "date_local": {"date": "2026-11-13", "tz": "America/New_York"}, "date_cn": "2026-11-13 21:30", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "B", "level_reason": "美国 PPI：月度单一数据，对 A 股传导间接", "level_changed": "2026-11-12"}, {"id": "E-20261118-01", "name": "英伟达 FY2027 Q3 财报", "date_start": "2026-11-18", "date_end": "2026-11-18", "type": "海外财报", "confirm": "官方公告", "strength": 3, "sectors": ["PCB", "覆铜板", "光模块", "液冷", "机器人", "具身智能"], "entry_window": 14, "watch": "数据中心营收 + Q4 指引（定方向）；Blackwell/Rubin 出货节奏（定斜率）；毛利率（环比下滑对上游是好事）", "invalidate": "若 A 股算力链在 T-14 到 T-7 之间已提前大涨 20% 以上，说明预期打满，本事件降级为「兑现」不作为开仓依据。", "targets": {"lines": [{"line": "GPU 配套（PCB/光模块/服务器）", "basis": "供货关系：英伟达数据中心 GPU 放量，直接拉动 PCB、光模块、服务器代工", "emotion": [{"code": "300308.SZ", "name": "中际旭创", "why": "英伟达光模块核心供应商", "pct": 0.84, "vs": 0.66, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 164.4, "mcap": 4398.7, "overlap": false, "turn": 3.75}, {"code": "601138.SH", "name": "工业富联", "why": "英伟达 AI 服务器代工供应商，GPU 放量直接受益", "pct": 5.68, "vs": 5.5, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 65.0, "mcap": 7528.9, "overlap": false, "turn": 0.87}, {"code": "300394.SZ", "name": "天孚通信", "why": "英伟达光模块核心供应商", "pct": 4.6, "vs": 4.42, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 54.0, "mcap": 1190.9, "overlap": false, "turn": 4.56}], "main": [{"code": "300308.SZ", "name": "中际旭创", "why": "英伟达光模块核心供应商", "pct": 0.84, "vs": 0.66, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 164.4, "mcap": 4398.7, "overlap": true, "turn": 3.75}, {"code": "300394.SZ", "name": "天孚通信", "why": "英伟达光器件核心供应商", "pct": 4.6, "vs": 4.42, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 54.0, "mcap": 1190.9, "overlap": true, "turn": 4.56}, {"code": "002463.SZ", "name": "沪电股份", "why": "英伟达 GB200/GB300 78 层 M9 背板国内独家供应商", "pct": 10.0, "vs": 9.82, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：国内独家", "evidence_checked": "2026-11-18", "amt": 81.9, "mcap": 1549.7, "overlap": false, "turn": 5.42}]}, {"line": "机器人（Isaac / Jetson）", "basis": "供货·合作：英伟达升级 Isaac 机器人平台，利好 3D 视觉、减速器、机器视觉硬件供应链", "emotion": [{"code": "688322.SH", "name": "奥比中光", "why": "英伟达 Isaac Sim 生态合作伙伴，3D 视觉入驻 Isaac Sim、适配 Jetson Thor，感知层配套供应", "pct": -2.37, "vs": -2.55, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：Gemini 335/336 入驻 Isaac Sim，与 Isaac Perceptor 集成，适配 Jetson Thor", "evidence_checked": "2026-11-18", "amt": 11.4, "mcap": 282.3, "overlap": false, "turn": 4.02}, {"code": "688400.SH", "name": "凌云光", "why": "机器视觉，机器人手眼协同，Isaac 生态感知层配套", "pct": -3.5, "vs": -3.68, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实：工业光学动作捕捉，手眼协同", "evidence_checked": "2026-11-18", "amt": 3.8, "mcap": 157.5, "overlap": false, "turn": 2.4}, {"code": "688017.SH", "name": "绿的谐波", "why": "人形机器人谐波减速器龙头，Isaac 生态硬件供应链", "pct": -0.68, "vs": -0.86, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实：Isaac 平台利好减速器供应链", "evidence_checked": "2026-11-18", "amt": 12.8, "mcap": 462.5, "overlap": false, "turn": 2.79}], "main": [{"code": "688017.SH", "name": "绿的谐波", "why": "人形机器人谐波减速器龙头", "pct": -0.68, "vs": -0.86, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 12.8, "mcap": 462.5, "overlap": true, "turn": 2.79}, {"code": "688322.SH", "name": "奥比中光", "why": "英伟达 Isaac Sim 生态合作伙伴，3D 视觉入驻 Isaac Sim、适配 Jetson Thor，感知层配套供应", "pct": -2.37, "vs": -2.55, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "供货关系", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 11.4, "mcap": 282.3, "overlap": true, "turn": 4.02}, {"code": "688400.SH", "name": "凌云光", "why": "机器视觉，机器人手眼协同，Isaac 生态感知层配套", "pct": -3.5, "vs": -3.68, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "业务关联", "evidence_src": "2026-10-25 WebSearch 核实", "evidence_checked": "2026-11-18", "amt": 3.8, "mcap": 157.5, "overlap": true, "turn": 2.4}]}]}, "status": "待验证", "note": "过去 4 个季度，财报后首个交易日 A 股 PCB/光模块/液冷平均跳空 3%—8%。拆双线：①GPU 配套（PCB/光模块/服务器，供货）②机器人 Isaac/Jetson（3D 视觉/减速器，供货+合作）。节奏：11/4 建 C 档 → 11/11 加 A 档 → 11/17 停手 → 11/19 高开 5% 以上减半。依据 2026-10-25 核实。", "action_kind": "build", "date_note": "美东 11/17（周二）盘后发布 FY2027 Q3（Wall Street Horizon 标注 CONFIRMED）。北京时间 11/18 凌晨，A 股 11/18 反应，date_start 取 11/18。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://wallstreethorizon.com/nvidia-earnings-calendar", "https://hk.investing.com/news/economy-news/article-93CH-1645202"], "note": "原标「惯例推测」，公司已确认 11/17 美东盘后。A 股反应日 11/18 不变，仅确定性档位升级。"}, "target_source": "英伟达（L1 双线拆解：GPU配套 + 机器人 Isaac/Jetson）", "reaction_t": "2026-11-18", "date_local": {"date": "2026-11-17", "tz": "America/New_York"}, "date_cn": "2026-11-18 05:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S"}, {"id": "E-20261118-02", "name": "无人机出口管制正式实施", "date_start": "2026-11-18", "date_end": "2026-11-18", "type": "政策窗口", "confirm": "官方公告", "strength": 2, "sectors": ["无人机整机", "无人机部件"], "entry_window": 5, "watch": "商务部等三部门 49 号公告：放宽续航 1h→3h、载荷 20L→80L，同时把飞控、云台、电机、桨叶等十三类物项增列管制", "invalidate": "若细则把部件管制清单压缩到 5 类以内，则「卡部件」逻辑不成立，只剩整机利好——方向判断要改。", "targets": {"emotion": [{"code": "688297.SH", "name": "中无人机", "why": "无人机整机，出口受益", "pct": -4.99, "vs": -5.17, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-18", "evidence_src": "待核", "amt": 3.1, "mcap": 231.5, "turn": 1.34}, {"code": "688070.SH", "name": "纵横股份", "why": "工业无人机整机，出口管制放宽直接受益", "pct": -1.93, "vs": -2.11, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-18", "evidence_src": "待核", "amt": 0.4, "mcap": 24.3, "turn": 1.73}, {"code": "002389.SZ", "name": "航天彩虹", "why": "无人机，出口管制放宽受益", "pct": -4.24, "vs": -4.42, "bench": "沪深300", "bench_chg": 0.18, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-18", "evidence_src": "待核", "amt": 3.3, "mcap": 162.4, "turn": 2.0}], "main": [{"code": "002389.SZ", "name": "航天彩虹", "why": "无人机，出口管制放宽受益", "pct": -4.24, "vs": -4.42, "bench": "沪深300", "bench_chg": 0.18, "amt": 3.3, "mcap": 162.4, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-18", "evidence_src": "待核", "turn": 2.0}, {"code": "688297.SH", "name": "中无人机", "why": "无人机整机，出口受益", "pct": -4.99, "vs": -5.17, "bench": "沪深300", "bench_chg": 0.18, "amt": 3.1, "mcap": 231.5, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-18", "evidence_src": "待核", "turn": 1.34}, {"code": "688070.SH", "name": "纵横股份", "why": "工业无人机整机，出口管制放宽直接受益", "pct": -1.93, "vs": -2.11, "bench": "沪深300", "bench_chg": 0.18, "amt": 0.4, "mcap": 24.3, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-18", "evidence_src": "待核", "turn": 1.73}]}, "status": "待验证", "note": "商务部／海关总署／中央军委装备发展部 2026 年第 49 号公告，10/19 发布，11/18 起正式实施。方向是「放整机、卡部件」：放宽低敏感整机（如农业无人机），对自动驾驶仪、云台稳定、任务载荷、无刷电机、电子调速器、碳纤维桨叶等十三类物项增列管制。", "action_kind": "avoid", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.mofcom.gov.cn/zcfb/blgg/art/2026/art_0d3312d7762d486bb4a7626e85b9dbed.html", "https://www.cnstock.com/commonDetail/804600"], "note": "实施日 11/18 与公告号均已核。原库「续航 1h→3h、载荷 20L→80L」的阈值未在公告正文检索到，标存疑，不建议作为交易依据。"}, "target_source": "无人机管制（L1 人工链）", "reaction_t": "2026-11-18", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A"}, {"id": "E-20261118-03", "name": "APEC 第三十三次领导人非正式会议（深圳）", "date_start": "2026-11-18", "date_end": "2026-11-19", "date_note": "官方：外交部 2025-12-12 宣布 11/18—19 在深圳举行，习近平主持。配套工商领导人峰会（CEO Summit）通常在领导人会前 2—3 日、外交与贸易双部长会同期，具体议程待官方公布。交易影响日取开幕日 11/18（周三），窗口 T-7 = 11/11。", "type": "主场外交", "confirm": "官方公告", "strength": 3, "sectors": ["深圳本地国资", "粤港澳", "安防与会展", "跨境支付"], "entry_window": 7, "watch": "三件事定级：① 中美元首是否单独会晤（决定主题高度）；② 普京出席并是否举行中俄元首会；③ 联合宣言对「亚太自贸区、数字经济、AI 治理」的表述与成果清单。深圳本地股只看成交量，不看故事。", "invalidate": "若 11/16 前深圳国企改革板块成交额未放大到 20 日均值 1.5 倍，说明资金没埋伏，按纯事件驱动处理，T-1 不追、T 日不接。若中美元首不举行单独会晤，主题降级为地方性会议，直接出库、不留观察位。", "targets": {"lines": [{"line": "深圳主场（会议主办地）", "basis": "板块映射：APEC 深圳峰会 → 深圳国资体系本地股，事件驱动型，非供货/股权关系", "emotion": [{"code": "300319.SZ", "name": "麦捷科技", "why": "深圳国企改革概念成分（深圳国资体系），APEC 深圳主场映射，事件驱动，无供货关系", "pct": -1.24, "vs": -1.27, "bench": "沪深300", "bench_chg": 0.03, "amt": 3.6, "mcap": 108.9, "turn": 3.32, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-19", "evidence_src": "Tushare 同花顺概念板块 885697.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "000011.SZ", "name": "深物业A", "why": "深圳国企改革概念成分（深圳国资体系），APEC 深圳主场映射，事件驱动，无供货关系", "pct": -3.45, "vs": -3.48, "bench": "沪深300", "bench_chg": 0.03, "amt": 1.5, "mcap": 35.4, "turn": 4.19, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-19", "evidence_src": "Tushare 同花顺概念板块 885697.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "002912.SZ", "name": "中新赛克", "why": "深圳国企改革概念成分（深圳国资体系），APEC 深圳主场映射，事件驱动，无供货关系", "pct": -10.0, "vs": -10.03, "bench": "沪深300", "bench_chg": 0.03, "amt": 2.7, "mcap": 32.0, "turn": 8.21, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-19", "evidence_src": "Tushare 同花顺概念板块 885697.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}], "main": [{"code": "300319.SZ", "name": "麦捷科技", "why": "深圳国企改革概念成分（深圳国资体系），APEC 深圳主场映射，事件驱动，无供货关系", "pct": -1.24, "vs": -1.27, "bench": "沪深300", "bench_chg": 0.03, "amt": 3.6, "mcap": 108.9, "turn": 3.32, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-19", "evidence_src": "Tushare 同花顺概念板块 885697.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "000058.SZ", "name": "深 赛 格", "why": "深圳国企改革概念成分（深圳国资体系），APEC 深圳主场映射，事件驱动，无供货关系", "pct": -3.24, "vs": -3.27, "bench": "沪深300", "bench_chg": 0.03, "amt": 0.8, "mcap": 58.8, "turn": 1.4, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-19", "evidence_src": "Tushare 同花顺概念板块 885697.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "000011.SZ", "name": "深物业A", "why": "深圳国企改革概念成分（深圳国资体系），APEC 深圳主场映射，事件驱动，无供货关系", "pct": -3.45, "vs": -3.48, "bench": "沪深300", "bench_chg": 0.03, "amt": 1.5, "mcap": 35.4, "turn": 4.19, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-19", "evidence_src": "Tushare 同花顺概念板块 885697.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}]}]}, "status": "待验证", "action_kind": "build", "evidence": {"checked": "2026-10-29", "verdict": "已核", "src": ["https://www.gov.cn/zhengce/jiedu/tujie/202512/content_7051072.htm", "https://www.sz.gov.cn/cn/xxgk/zfxxgj/zwdt/content/post_13008811.html", "https://big5.cctv.com/gate/big5/news.cctv.com/2026/08/28/ARTIPQq0YcuCHnWnZs11VICi260828.shtml"], "note": "外交部 2025-12-12 官宣日期；深圳市人大 9/30 授权决定、10/15 交通保障发布会均确认 11/18—19。此前事件库未收录，属漏项。"}, "note": "补库说明：这是本库此前最简单的漏项——覆盖区间（10/22—11/30）内、日期官方已公告、级别 S，却没进库。原因是建库时按「有产业链映射」筛事件，主场外交被当成「无标的」跳过。本次补入，标的只有板块映射一层，证据等级只到「业务关联」，不给硬关系。", "level": "S", "reaction_t": "2026-11-18", "confirm_checked": "2026-10-29", "calendar_layer": "正式"}, {"id": "E-20261119-01", "name": "CDCC 数据中心标准大会（第 14 届）", "date_start": "2026-11-19", "date_end": "2026-11-20", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["液冷", "光模块", "数据中心", "电源"], "entry_window": 7, "watch": "液冷规模化部署标准、800V HVDC 直流供电、光模块选型规范。CDCC 是行业标准组织，会上定的口径会变成采购依据", "invalidate": "若大会只谈趋势不落标准（无白皮书/无强制条款），对产业链只是例行会议，不构成催化。", "targets": {"emotion": [{"code": "301018.SZ", "name": "申菱环境", "why": "数据中心温控，CDCC 标准升级直接受益，带动替换需求", "pct": -8.97, "vs": -8.21, "bench": "沪深300", "bench_chg": -0.76, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-20", "evidence_src": "待核", "amt": 4.9, "mcap": 144.2, "turn": 3.3}, {"code": "002837.SZ", "name": "英维克", "why": "液冷温控龙头，CDCC标准直接落地其产品线", "pct": -7.45, "vs": -6.69, "bench": "沪深300", "bench_chg": -0.76, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-20", "evidence_src": "待核", "amt": 9.2, "mcap": 363.8, "turn": 2.47}, {"code": "002851.SZ", "name": "麦格米特", "why": "800V HVDC电源，议题直接映射", "pct": -2.95, "vs": -2.19, "bench": "沪深300", "bench_chg": -0.76, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-20", "evidence_src": "待核", "amt": 14.1, "mcap": 285.4, "turn": 4.89}], "main": [{"code": "002851.SZ", "name": "麦格米特", "why": "800V HVDC电源，议题直接映射", "pct": -2.95, "vs": -2.19, "bench": "沪深300", "bench_chg": -0.76, "amt": 14.1, "mcap": 285.4, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-20", "evidence_src": "待核", "turn": 4.89}, {"code": "002837.SZ", "name": "英维克", "why": "液冷温控龙头，CDCC标准直接落地其产品线", "pct": -7.45, "vs": -6.69, "bench": "沪深300", "bench_chg": -0.76, "amt": 9.2, "mcap": 363.8, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-20", "evidence_src": "待核", "turn": 2.47}, {"code": "301018.SZ", "name": "申菱环境", "why": "数据中心温控，CDCC 标准升级直接受益，带动替换需求", "pct": -8.97, "vs": -8.21, "bench": "沪深300", "bench_chg": -0.76, "amt": 4.9, "mcap": 144.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-20", "evidence_src": "待核", "turn": 3.3}]}, "status": "待验证", "action_kind": "build", "date_note": "11/19（周四）—11/20（周五），两个交易日。", "note": "北京国家会议中心，11/19—20。同期南京有机器人三展、苏州有 AICD 液冷会，11/19—21 是本月最密集的窗口。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://ima.qq.com/wiki/?shareId=0e308d271d771b7919218ab3bff44e2eb0d0c4ed6932c65b3344be9d6140efa0"], "note": "主办方/官网公布日期。"}, "target_source": "CDCC（L1 人工链）", "level": "B", "reaction_t": "2026-11-19", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level_reason": "CDCC：数据中心细分标准会，★3 过高", "level_changed": "2026-11-12"}, {"id": "E-20261119-02", "name": "中国国际智能与人形机器人产业大会（南京）", "date_start": "2026-11-19", "date_end": "2026-11-21", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["人形机器人", "具身智能"], "entry_window": 7, "watch": "整机厂新品、供应链签约、量产节奏披露；同城还有世界智能制造博览会（5.5 万平米）", "invalidate": "若只有展台没有新品与订单披露，按情绪处理，不做产业逻辑。", "targets": {"emotion": [{"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器，机器人大会参展", "pct": -6.1, "vs": -5.34, "bench": "沪深300", "bench_chg": -0.76, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-20", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%", "amt": 15.4, "mcap": 423.1, "turn": 3.5}, {"code": "002747.SZ", "name": "埃斯顿", "why": "南京本地工业机器人龙头，大会主参展商", "pct": -3.27, "vs": -2.51, "bench": "沪深300", "bench_chg": -0.76, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-20", "evidence_src": "待核", "amt": 8.6, "mcap": 190.2, "turn": 4.45}, {"code": "002896.SZ", "name": "中大力德", "why": "减速器，宇树核心供应商", "pct": -6.39, "vs": -5.63, "bench": "沪深300", "bench_chg": -0.76, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-20", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协", "amt": 2.9, "mcap": 95.0, "turn": 2.99}], "main": [{"code": "688017.SH", "name": "绿的谐波", "why": "谐波减速器，机器人大会参展", "pct": -6.1, "vs": -5.34, "bench": "沪深300", "bench_chg": -0.76, "amt": 15.4, "mcap": 423.1, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-20", "evidence_src": "2026-10-25 核实：宇树谐波减速器核心供应商，采购占比约 70%", "turn": 3.5}, {"code": "002747.SZ", "name": "埃斯顿", "why": "南京本地工业机器人龙头，大会主参展商", "pct": -3.27, "vs": -2.51, "bench": "沪深300", "bench_chg": -0.76, "amt": 8.6, "mcap": 190.2, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-20", "evidence_src": "待核", "turn": 4.45}, {"code": "002896.SZ", "name": "中大力德", "why": "减速器，宇树核心供应商", "pct": -6.39, "vs": -5.63, "bench": "沪深300", "bench_chg": -0.76, "amt": 2.9, "mcap": 95.0, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-20", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协", "turn": 2.99}]}, "status": "待验证", "action_kind": "build", "date_note": "11/19（周四）—11/21（周六），前两日是交易日。", "note": "南京国际博览中心，11/19—21，与南京智能工业博览会、世界智能制造博览会同期同馆，实际是一个超级展群。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://176936801.b2b.11467.com/m/news/19062678.asp"], "note": "主办方/官网公布日期。"}, "target_source": "南京机器人（L1 人工链）", "level": "A", "reaction_t": "2026-11-19", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level_reason": "人形机器人产业大会（南京）：国家级行业大会，原 B 偏低", "level_changed": "2026-11-12"}, {"id": "E-20261126-01", "name": "美国 10 月 PCE + Q3 GDP 二读", "date_start": "2026-11-26", "date_end": "2026-11-26", "type": "海外宏观", "confirm": "官方公告", "strength": 2, "sectors": ["黄金", "成长股估值"], "entry_window": 5, "watch": "PCE 物价指数（美联储最看重的通胀指标）；GDP 二读修正", "invalidate": "弱催化，主要影响 12 月 FOMC 前的预期定价。", "targets": {"emotion": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 4.87, "vs": 4.81, "bench": "沪深300", "bench_chg": 0.06, "amt": 18.6, "mcap": 587.4, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 3.16}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 3.1, "vs": 3.04, "bench": "沪深300", "bench_chg": 0.06, "amt": 15.9, "mcap": 842.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.89}, {"code": "002155.SZ", "name": "湖南黄金", "why": "小市值黄金，降息受益弹性", "pct": 2.95, "vs": 2.89, "bench": "沪深300", "bench_chg": 0.06, "amt": 6.6, "mcap": 261.6, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 2.5}], "main": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 4.87, "vs": 4.81, "bench": "沪深300", "bench_chg": 0.06, "amt": 18.6, "mcap": 587.4, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 3.16}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 3.1, "vs": 3.04, "bench": "沪深300", "bench_chg": 0.06, "amt": 15.9, "mcap": 842.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.89}, {"code": "002155.SZ", "name": "湖南黄金", "why": "小市值黄金，降息受益弹性", "pct": 2.95, "vs": 2.89, "bench": "沪深300", "bench_chg": 0.06, "amt": 6.6, "mcap": 261.6, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 2.5}]}, "status": "待验证", "action_kind": "none", "date_note": "北京 11/25 21:30 公布，A 股反应日 11/26。", "note": "美东 11/25（周三）08:30 = 北京 11/25 21:30，A 股首个反应日 11/26（周四）。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.bls.gov/schedule/2026/11_sched_list.htm"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "reaction_t": "2026-11-26", "date_local": {"date": "2026-11-25", "tz": "America/New_York"}, "date_cn": "2026-11-25 21:30", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A"}, {"id": "E-20261126-02", "name": "亚洲机器人产业链展（深圳）", "date_start": "2026-11-26", "date_end": "2026-11-28", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["机器人", "具身智能", "零部件"], "entry_window": 7, "watch": "产业链配套（减速器、丝杠、灵巧手、传感器）的国产替代进展，偏供应链而非整机", "invalidate": "若参展以零部件小厂为主、无头部整机厂参与，对上市公司映射弱。", "targets": {"emotion": [{"code": "002896.SZ", "name": "中大力德", "why": "减速器，宇树核心供应商，产业链展主力", "pct": -2.41, "vs": -2.47, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-26", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协", "amt": 2.8, "mcap": 98.7, "turn": 2.8}, {"code": "300718.SZ", "name": "长盛轴承", "why": "自润滑轴承，已批量供货", "pct": -2.92, "vs": -2.98, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-26", "evidence_src": "2026-10-25 核实：宇树关节自润滑轴承供应商，渗透率超 80%【注意：机器人业务营收占比不足 1%，商业贡献极小】", "amt": 2.2, "mcap": 85.1, "turn": 2.55}, {"code": "301261.SZ", "name": "恒工精密", "why": "机器人供应链小市值标的，无供货证据（业务关联，情绪弹性）", "pct": -1.6, "vs": -1.66, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 5.9, "mcap": 78.6, "turn": 7.37}], "main": [{"code": "002896.SZ", "name": "中大力德", "why": "减速器，宇树核心供应商，产业链展主力", "pct": -2.41, "vs": -2.47, "bench": "沪深300", "bench_chg": 0.06, "amt": 2.8, "mcap": 98.7, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-26", "evidence_src": "2026-10-25 核实：宇树减速器第一大供应商，采购占比超 63%，2025-2027 年 32 亿长协", "turn": 2.8}, {"code": "300718.SZ", "name": "长盛轴承", "why": "自润滑轴承，已批量供货", "pct": -2.92, "vs": -2.98, "bench": "沪深300", "bench_chg": 0.06, "amt": 2.2, "mcap": 85.1, "overlap": true, "evidence_level": "供货关系", "evidence_rank": 4, "evidence_checked": "2026-11-26", "evidence_src": "2026-10-25 核实：宇树关节自润滑轴承供应商，渗透率超 80%【注意：机器人业务营收占比不足 1%，商业贡献极小】", "turn": 2.55}, {"code": "301261.SZ", "name": "恒工精密", "why": "机器人供应链小市值标的，无供货证据（业务关联，情绪弹性）", "pct": -1.6, "vs": -1.66, "bench": "沪深300", "bench_chg": 0.06, "amt": 5.9, "mcap": 78.6, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 7.37}]}, "status": "待验证", "action_kind": "build", "date_note": "11/26（周四）—11/28（周六），前两日交易日。", "note": "深圳国际会展中心（新馆），11/26—28。偏产业链配套，适合找二线弹性标的。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://zgjqr.cn/exhibition"], "note": "主办方/官网公布日期。"}, "target_source": "深圳机器人展（L1 人工链）", "level": "B", "reaction_t": "2026-11-26", "confirm_checked": "2026-10-25", "calendar_layer": "正式"}, {"id": "E-20261127-01", "name": "第二十四届广州国际车展", "date_start": "2026-11-27", "date_end": "2026-12-06", "date_note": "官方：2026-11-27 至 12-06 在广交会展馆，整车展期全程，零部件展区 11/27—30（D 区）。年度收官展，交易影响日取媒体日/开幕 11/27（周五）。", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["整车", "智能驾驶", "汽车零部件"], "entry_window": 5, "watch": "年度最后一个 A 级车展，看三件事：① 华为系（问界/智界/尊界）新车与智驾版本；② 固态电池装车进展；③ 年底价格政策是否再开一轮价格战（决定零部件毛利预期）。", "invalidate": "若无重磅新车、无价格战升级，按常规展会处理，T 日不追。若价格战重启，零部件逻辑反转，整条线降级。", "targets": {"lines": [{"line": "整车与华为链", "basis": "板块映射：广州车展 → 新车周期与年底定价，事件驱动型，非供货关系", "emotion": [{"code": "000701.SZ", "name": "厦门信达", "why": "华为汽车产业链成分，广州车展新车周期与年度收官定价映射，事件驱动，无供货关系", "pct": 0.23, "vs": 0.17, "bench": "沪深300", "bench_chg": 0.06, "amt": 0.9, "mcap": 29.2, "turn": 3.11, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885834.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "301005.SZ", "name": "超捷股份", "why": "华为汽车产业链成分，广州车展新车周期与年度收官定价映射，事件驱动，无供货关系", "pct": -1.76, "vs": -1.82, "bench": "沪深300", "bench_chg": 0.06, "amt": 4.8, "mcap": 71.0, "turn": 6.56, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885834.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "002420.SZ", "name": "毅昌科技", "why": "华为汽车产业链成分，广州车展新车周期与年度收官定价映射，事件驱动，无供货关系", "pct": -2.44, "vs": -2.5, "bench": "沪深300", "bench_chg": 0.06, "amt": 1.5, "mcap": 22.6, "turn": 6.41, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885834.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}], "main": [{"code": "300750.SZ", "name": "宁德时代", "why": "华为汽车产业链成分，广州车展新车周期与年度收官定价映射，事件驱动，无供货关系", "pct": -2.02, "vs": -2.08, "bench": "沪深300", "bench_chg": 0.06, "amt": 131.6, "mcap": 8701.0, "turn": 1.51, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885834.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "300115.SZ", "name": "长盈精密", "why": "华为汽车产业链成分，广州车展新车周期与年度收官定价映射，事件驱动，无供货关系", "pct": -2.98, "vs": -3.04, "bench": "沪深300", "bench_chg": 0.06, "amt": 11.1, "mcap": 291.8, "turn": 3.76, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885834.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "600105.SH", "name": "永鼎股份", "why": "华为汽车产业链成分，广州车展新车周期与年度收官定价映射，事件驱动，无供货关系", "pct": 0.85, "vs": 0.79, "bench": "沪深300", "bench_chg": 0.06, "amt": 13.0, "mcap": 278.8, "turn": 4.65, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885834.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}]}]}, "status": "待验证", "action_kind": "build", "evidence": {"checked": "2026-10-29", "verdict": "已核", "src": ["https://autoguangzhou.org.cn", "https://www.mice-gz.org/hz/a/10/1601581967580042.html"], "note": "主办方官网与广州市会展平台均确认 11/27—12/06。"}, "note": "级别只给 B：车展是「验证场」不是「催化场」，除非有爆款车型或价格战拐点，否则不改趋势。", "level": "A", "reaction_t": "2026-11-27", "confirm_checked": "2026-10-29", "calendar_layer": "正式", "level_reason": "广州车展：国内顶级车展，跨汽车/锂电/智驾", "level_changed": "2026-11-12"}, {"id": "E-20261130-01", "name": "10 月工业企业利润", "date_start": "2026-11-27", "date_end": "2026-11-27", "type": "宏观数据", "confirm": "惯例推测", "strength": 1, "sectors": ["制造业"], "entry_window": 3, "watch": "制造业盈利验证，尤其上游涨价链是否传导到利润", "invalidate": "弱催化，只做验证不做交易。", "targets": {"emotion": [{"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 3.4, "vs": 3.34, "bench": "沪深300", "bench_chg": 0.06, "amt": 64.3, "mcap": 4892.9, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.32}, {"code": "600362.SH", "name": "江西铜业", "why": "铜价映射工业景气，直接受益", "pct": 1.66, "vs": 1.6, "bench": "沪深300", "bench_chg": 0.06, "amt": 7.3, "mcap": 584.0, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.26}, {"code": "600019.SH", "name": "宝钢股份", "why": "制造业景气直接受益", "pct": -0.16, "vs": -0.22, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 4.0, "mcap": 1321.2, "turn": 0.31}], "main": [{"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 3.4, "vs": 3.34, "bench": "沪深300", "bench_chg": 0.06, "amt": 64.3, "mcap": 4892.9, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.32}, {"code": "600362.SH", "name": "江西铜业", "why": "铜价映射工业景气，直接受益", "pct": 1.66, "vs": 1.6, "bench": "沪深300", "bench_chg": 0.06, "amt": 7.3, "mcap": 584.0, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.26}]}, "status": "待验证", "action_kind": "none", "date_note": "统计局惯例在 27 日发布 1—10 月工业企业利润（2023／2024／2025 连续三年均为 11/27）。原库写 11/30，按惯例修正为 11/27（周五，交易日）。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": [], "note": "近三年发布日高度一致（11/27）。属惯例推测，官方未单列该指标日程。"}, "reaction_t": "2026-11-27", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "B", "level_reason": "工业企业利润：滞后指标，单月不改方向", "level_changed": "2026-11-12"}, {"id": "E-20261130-02", "name": "11 月官方制造业 PMI", "date_start": "2026-11-30", "date_end": "2026-11-30", "type": "宏观数据", "confirm": "惯例推测", "strength": 2, "sectors": ["顺周期", "制造业"], "entry_window": 3, "watch": "是否重回荣枯线 50 上方；新订单与生产分项；出厂价格指数（决定涨价链能否延续）", "invalidate": "单月 PMI 对指数影响有限，只在明显偏离 50 时才有方向意义，不单独作为开仓依据。", "targets": {"emotion": [], "main": [{"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 3.4, "vs": 3.34, "bench": "沪深300", "bench_chg": 0.06, "amt": 64.3, "pool": "周期", "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "mcap": 4892.9, "turn": 1.32}, {"code": "600362.SH", "name": "江西铜业", "why": "铜价映射工业景气，直接受益", "pct": 1.66, "vs": 1.6, "bench": "沪深300", "bench_chg": 0.06, "amt": 7.3, "pool": "周期", "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "mcap": 584.0, "turn": 1.26}]}, "status": "待验证", "date_note": "统计局惯例于月末最后一日 9:30 发布当月 PMI。2026/11/30 为周一，交易日。", "action_kind": "none", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.stats.gov.cn/sj/fbrc/bnxxfb/"], "note": "PMI 固定月末发布，11 月最后一个交易日为 11/30。"}, "reaction_t": "2026-11-30", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "A"}, {"id": "E-20261130-03", "name": "医保药品目录 + 商保创新药目录公布（创新药高质量发展大会）", "date_start": "2026-11-30", "date_end": "2026-11-30", "date_note": "国家医保局口径：2026 年基本目录与商保创新药目录「11 月底前」公布，并计划 11 月下旬召开「创新药高质量发展大会」同步发布。具体日未公告，此处按最晚可能日 11/30（周一）排，官方定日后再校正。", "type": "政策窗口", "confirm": "惯例推测", "strength": 2, "sectors": ["创新药", "CXO", "商保创新药"], "entry_window": 7, "watch": "三个数：① 谈判平均降价幅度（历年 50—60%，超 65% 视为利空）；② 商保创新药目录扩容品种数（首版之后的第一次扩围）；③ 有无重磅出海授权（BD）品种入选。", "invalidate": "若公布当日创新药指数冲高回落且成交额未放大，按兑现处理；若平均降价幅度超 65%，逻辑反转，整条线降级。", "targets": {"lines": [{"line": "创新药（医保准入）", "basis": "板块映射：双目录公布 → 创新药放量与商保支付，事件驱动型，非供货/股权关系", "emotion": [{"code": "300006.SZ", "name": "莱美药业", "why": "创新药概念成分，医保/商保双目录公布直接受益品种，事件驱动，无供货关系", "pct": -7.94, "vs": -8.0, "bench": "沪深300", "bench_chg": 0.06, "amt": 16.4, "mcap": 84.5, "turn": 19.11, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 886015.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "300404.SZ", "name": "博济医药", "why": "创新药概念成分，医保/商保双目录公布直接受益品种，事件驱动，无供货关系", "pct": -1.73, "vs": -1.79, "bench": "沪深300", "bench_chg": 0.06, "amt": 1.3, "mcap": 26.0, "turn": 5.08, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 886015.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "603716.SH", "name": "塞力医疗", "why": "创新药概念成分，医保/商保双目录公布直接受益品种，事件驱动，无供货关系", "pct": -1.27, "vs": -1.33, "bench": "沪深300", "bench_chg": 0.06, "amt": 0.8, "mcap": 28.0, "turn": 2.92, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 886015.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}], "main": [{"code": "603259.SH", "name": "药明康德", "why": "创新药概念成分，医保/商保双目录公布直接受益品种，事件驱动，无供货关系", "pct": 2.95, "vs": 2.89, "bench": "沪深300", "bench_chg": 0.06, "amt": 44.9, "mcap": 3635.7, "turn": 1.24, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 886015.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "600276.SH", "name": "恒瑞医药", "why": "创新药概念成分，医保/商保双目录公布直接受益品种，事件驱动，无供货关系", "pct": -0.73, "vs": -0.79, "bench": "沪深300", "bench_chg": 0.06, "amt": 15.4, "mcap": 3020.5, "turn": 0.51, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 886015.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "300006.SZ", "name": "莱美药业", "why": "创新药概念成分，医保/商保双目录公布直接受益品种，事件驱动，无供货关系", "pct": -7.94, "vs": -8.0, "bench": "沪深300", "bench_chg": 0.06, "amt": 16.4, "mcap": 84.5, "turn": 19.11, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 886015.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}]}]}, "status": "待验证", "action_kind": "build", "evidence": {"checked": "2026-10-29", "verdict": "已核", "src": ["https://www.nhsa.gov.cn/art/2026/5/9/art_105_20455.html", "https://news.cnr.cn/native/gd/20260519/t20260519_527626139.shtml"], "note": "医保局工作方案与官方解读均写「11 月底前公布」，并明确 11 月下旬开创新药高质量发展大会。具体日期待公告。"}, "note": "确定性只有「月份」没有「日」，按最晚日排是为了不漏；代价是可能提前 1—2 周入场，所以窗口给 7 天而不是 10 天。", "level": "A", "reaction_t": "2026-11-30", "confirm_checked": "2026-10-29", "calendar_layer": "正式"}, {"id": "E-20261201-01", "name": "GTC 华盛顿特区（黄仁勋主题演讲）", "date_start": "2026-12-01", "date_end": "2026-12-03", "type": "产业大会", "confirm": "官方公告", "strength": 3, "sectors": ["人形机器人", "AI算力", "AI 应用"], "entry_window": 7, "watch": "AI 加速美国经济增长与再工业化，关注主权 AI、物理 AI 新进展", "invalidate": "若内容与 GTC 柏林重复（无新品），则非催化。", "targets": {"emotion": [{"code": "301313.SZ", "name": "凡拓数创", "why": "物理AI仿真数据服务商，GTC发布开放数据集直接受益", "pct": -2.99, "vs": -3.05, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "产品发布", "evidence_rank": 3, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 20.2, "mcap": 61.3, "turn": 33.54}, {"code": "688787.SH", "name": "海天瑞声", "why": "具身智能训练数据服务商，GTC物理AI直接受益", "pct": -5.44, "vs": -5.5, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 5.3, "mcap": 55.7, "turn": 9.48}, {"code": "300296.SZ", "name": "利亚德", "why": "物理AI+Micro LED，GTC机器人视觉受益", "pct": -0.84, "vs": -0.9, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 5.0, "mcap": 109.2, "turn": 4.6}], "main": [{"code": "300296.SZ", "name": "利亚德", "why": "物理AI+Micro LED，GTC机器人视觉受益", "pct": -0.84, "vs": -0.9, "bench": "沪深300", "bench_chg": 0.06, "amt": 5.0, "mcap": 109.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 4.6}, {"code": "301313.SZ", "name": "凡拓数创", "why": "物理AI仿真数据服务商，GTC发布开放数据集直接受益", "pct": -2.99, "vs": -3.05, "bench": "沪深300", "bench_chg": 0.06, "amt": 20.2, "mcap": 61.3, "overlap": true, "evidence_level": "产品发布", "evidence_rank": 3, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 33.54}, {"code": "688787.SH", "name": "海天瑞声", "why": "具身智能训练数据服务商，GTC物理AI直接受益", "pct": -5.44, "vs": -5.5, "bench": "沪深300", "bench_chg": 0.06, "amt": 5.3, "mcap": 55.7, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 9.48}]}, "status": "待验证", "action_kind": "build", "date_note": "12/1（周二）—12/3（周四），三个交易日。", "note": "华盛顿 Ronald Reagan Building，11/30—12/3。黄仁勋 12/1 下午 2:00（北京时间 12/2 03:00）演讲。GTC 柏林已发布物理AI全栈，本次若无增量信息则催化弱。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://www.nvidia.com/gtc-bah"], "note": "NVIDIA 官方公告。"}, "causal_ref": "E-20261020-01", "playbook": {"ref": "GTC柏林(10/20)已验证：黄仁勋讲物理AI → 凡拓数创+95.5%、海天瑞声+77.6%、利亚德+62.3%、华依科技+54.8%", "if_then": "若12/1黄仁勋再提物理AI/机器人新品 → 优先上述4只（概念纯度高）", "if_not": "若仅重复GTC柏林内容、无新品 → 催化弱，按例会将处理", "watch_start": "2026-11-24（T-7，进入埋伏窗口）"}, "target_source": "GTC华盛顿（L1 人工链）", "level": "S", "reaction_t": "2026-12-01", "date_local": {"date": "2026-12-01", "tz": "America/New_York"}, "date_cn": "2026-12-02 03:00", "sub_events": [{"name": "工作坊", "date": "2026-11-30"}, {"name": "大会", "date": "2026-12-01", "end": "2026-12-03"}, {"name": "黄仁勋主题演讲", "date": "2026-12-01", "cn": "2026-12-02 03:00"}], "confirm_checked": "2026-10-25", "calendar_layer": "正式"}, {"id": "E-20261207-01", "name": "第十六届中国航展（珠海）", "date_start": "2026-12-07", "date_end": "2026-12-13", "date_note": "官方：珠海航展集团 2026-07-24 公告、10-13 北京发布会确认 12/7—13，展期延长至 7 天。「一展三区」：航展中心主展区、莲洲无人装备展示区、高栏港海上装备展示区（后两区 12/7—10）。交易影响日取开幕 12/7（周一），窗口 T-7 = 11/30。", "type": "产业大会", "confirm": "官方公告", "strength": 3, "sectors": ["军工", "大飞机", "低空经济", "无人机"], "entry_window": 7, "watch": "近 50 国、1100 余家企业、参展装备超 3000 件、首展首秀约 10%。看：空军海军新型装备是否首次公开、无人机（莲洲区）与海上装备（高栏港区）两个新展区的首秀型号、外贸订单签约。", "invalidate": "若开幕前一周军工板块成交额未放大到 20 日均值 1.3 倍，说明只有叙事没有资金，T 日按兑现处理；若首展装备与市场预期不符（无新型号），主题当日结束。", "targets": {"lines": [{"line": "军工（装备展示主线）", "basis": "板块映射：珠海航展 → 军工装备展示与外贸订单预期，事件驱动型，非供货关系", "emotion": [{"code": "301079.SZ", "name": "邵阳液压", "why": "军工板块成分，珠海航展装备展示与外贸订单预期映射，事件驱动，无供货关系", "pct": -6.86, "vs": -6.92, "bench": "沪深300", "bench_chg": 0.06, "amt": 3.4, "mcap": 19.5, "turn": 16.77, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885700.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "688818.SH", "name": "电科蓝天", "why": "军工板块成分，珠海航展装备展示与外贸订单预期映射，事件驱动，无供货关系", "pct": 0.81, "vs": 0.75, "bench": "沪深300", "bench_chg": 0.06, "amt": 4.0, "mcap": 48.0, "turn": 8.14, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885700.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "301306.SZ", "name": "西测测试", "why": "军工板块成分，珠海航展装备展示与外贸订单预期映射，事件驱动，无供货关系", "pct": 0.89, "vs": 0.83, "bench": "沪深300", "bench_chg": 0.06, "amt": 3.4, "mcap": 33.1, "turn": 10.1, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885700.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}], "main": [{"code": "600487.SH", "name": "亨通光电", "why": "军工板块成分，珠海航展装备展示与外贸订单预期映射，事件驱动，无供货关系", "pct": 1.35, "vs": 1.29, "bench": "沪深300", "bench_chg": 0.06, "amt": 32.8, "mcap": 850.4, "turn": 3.87, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885700.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "000678.SZ", "name": "襄阳轴承", "why": "军工板块成分，珠海航展装备展示与外贸订单预期映射，事件驱动，无供货关系", "pct": 10.02, "vs": 9.96, "bench": "沪深300", "bench_chg": 0.06, "amt": 24.7, "mcap": 100.9, "turn": 26.4, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885700.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "000559.SZ", "name": "万向钱潮", "why": "军工板块成分，珠海航展装备展示与外贸订单预期映射，事件驱动，无供货关系", "pct": -3.28, "vs": -3.34, "bench": "沪深300", "bench_chg": 0.06, "amt": 6.8, "mcap": 314.4, "turn": 2.14, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885700.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}]}, {"line": "大飞机（民机主线）", "basis": "板块映射：珠海航展 → 大飞机产业链展示与订单预期，事件驱动型，非供货关系", "emotion": [{"code": "301232.SZ", "name": "飞沃科技", "why": "大飞机产业链成分，珠海航展机型展示与订单预期映射，事件驱动，无供货关系", "pct": -2.44, "vs": -2.5, "bench": "沪深300", "bench_chg": 0.06, "amt": 3.7, "mcap": 27.6, "turn": 12.68, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885566.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "301306.SZ", "name": "西测测试", "why": "大飞机产业链成分，珠海航展机型展示与订单预期映射，事件驱动，无供货关系", "pct": 0.89, "vs": 0.83, "bench": "沪深300", "bench_chg": 0.06, "amt": 3.4, "mcap": 33.1, "turn": 10.1, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885566.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "600501.SH", "name": "航天晨光", "why": "大飞机产业链成分，珠海航展机型展示与订单预期映射，事件驱动，无供货关系", "pct": -1.89, "vs": -1.95, "bench": "沪深300", "bench_chg": 0.06, "amt": 1.4, "mcap": 51.0, "turn": 2.69, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885566.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}], "main": [{"code": "603667.SH", "name": "五洲新春", "why": "大飞机产业链成分，珠海航展机型展示与订单预期映射，事件驱动，无供货关系", "pct": -1.14, "vs": -1.2, "bench": "沪深300", "bench_chg": 0.06, "amt": 9.5, "mcap": 170.0, "turn": 5.57, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885566.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "600118.SH", "name": "中国卫星", "why": "大飞机产业链成分，珠海航展机型展示与订单预期映射，事件驱动，无供货关系", "pct": 1.99, "vs": 1.93, "bench": "沪深300", "bench_chg": 0.06, "amt": 14.8, "mcap": 550.3, "turn": 2.68, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885566.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}, {"code": "000988.SZ", "name": "华工科技", "why": "大飞机产业链成分，珠海航展机型展示与订单预期映射，事件驱动，无供货关系", "pct": 0.77, "vs": 0.71, "bench": "沪深300", "bench_chg": 0.06, "amt": 15.1, "mcap": 589.4, "turn": 2.55, "overlap": false, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "Tushare 同花顺概念板块 885566.TI 成分 + 腾讯快照 2026-10-29，非供货/股权核实"}]}]}, "status": "待验证", "action_kind": "build", "evidence": {"checked": "2026-10-29", "verdict": "已核", "src": ["https://www.airshow.com.cn/Print.aspx?id=14439", "https://www.zhuhai.gov.cn/zw/sczc/wzt/wdhd/content/post_3949163.html", "https://ysxw.cctv.cn/article.html?item_id=2147296846501299398"], "note": "官方公告 7/24 定档 12/7—13；10/13 发布会确认规模与三展区。此前只在观察项里挂了「珠海航展」没有日期，属漏项。"}, "note": "12 月是「军工 + 政策」双窗口：航展 12/7—13，中央经济工作会议 12 月中旬，中间只隔一个交易周，仓位要一次规划、不要两头加。", "level": "A", "reaction_t": "2026-12-07", "confirm_checked": "2026-10-29", "calendar_layer": "正式", "level_reason": "珠海航展：军工/低空单线，够不到 S（跨不到 2 个一级方向）", "level_changed": "2026-11-12"}, {"id": "E-20261207-AUTO", "name": "美国非农（2026-11）", "date_start": "2026-12-07", "date_end": "2026-12-07", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["全球流动性", "出口链"], "entry_window": 3, "watch": "新增就业、失业率、平均时薪同比；影响降息预期", "invalidate": "单月易受飓风/罢工扰动，看三个月均值；A 股只在预期大幅摆动时有反应", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-04，A 股反应日 2026-12-07（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-07", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261209-01", "name": "上海国际数据中心液冷技术展（第 8 届）", "date_start": "2026-12-09", "date_end": "2026-12-11", "type": "产业大会", "confirm": "官方公告", "strength": 2, "sectors": ["液冷", "数据中心", "热管理"], "entry_window": 7, "watch": "冷板式/浸没式液冷全系设备、CDU、快接头、氟化液；同期办热管理材料展", "invalidate": "展会偏设备展示，若无限价/涨价信号，对上市公司业绩无直接传导。", "targets": {"emotion": [{"code": "300499.SZ", "name": "高澜股份", "why": "液冷设备，展会参展", "pct": 0.0, "vs": -0.06, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 2.3, "mcap": 50.0, "turn": 4.55}, {"code": "301018.SZ", "name": "申菱环境", "why": "数据中心温控，标准受益", "pct": -0.4, "vs": -0.46, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 6.1, "mcap": 140.1, "turn": 4.36}, {"code": "002837.SZ", "name": "英维克", "why": "液冷温控龙头，展会主参展商", "pct": -0.39, "vs": -0.45, "bench": "沪深300", "bench_chg": 0.06, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-26", "evidence_src": "待核", "amt": 8.7, "mcap": 347.3, "turn": 2.49}], "main": [{"code": "002837.SZ", "name": "英维克", "why": "液冷温控龙头，展会主参展商", "pct": -0.39, "vs": -0.45, "bench": "沪深300", "bench_chg": 0.06, "amt": 8.7, "mcap": 347.3, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 2.49}, {"code": "301018.SZ", "name": "申菱环境", "why": "数据中心温控，标准受益", "pct": -0.4, "vs": -0.46, "bench": "沪深300", "bench_chg": 0.06, "amt": 6.1, "mcap": 140.1, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 4.36}, {"code": "300499.SZ", "name": "高澜股份", "why": "液冷设备，展会参展", "pct": 0.0, "vs": -0.06, "bench": "沪深300", "bench_chg": 0.06, "amt": 2.3, "mcap": 50.0, "overlap": true, "evidence_level": "参会", "evidence_rank": 1, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 4.55}]}, "status": "待验证", "action_kind": "build", "date_note": "12/9（周三）—12/11（周五），三个交易日。", "note": "上海新国际博览中心，12/9—11。与上海国际人工智能展（智能机器人展）同期，双展叠加。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["http://www.lcs-expo.com/"], "note": "主办方/官网公布日期。"}, "target_source": "液冷展（L1 人工链）", "level": "B", "reaction_t": "2026-12-09", "confirm_checked": "2026-10-25", "calendar_layer": "正式"}, {"id": "E-20261209-AUTO", "name": "11 月 CPI", "date_start": "2026-12-09", "date_end": "2026-12-09", "type": "宏观数据", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["消费", "农业"], "entry_window": 3, "watch": "CPI 同比、核心 CPI；能否延续回升决定消费与政策空间", "invalidate": "单月不改方向，低于预期且连续两月才调整判断", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-09，A 股反应日 2026-12-09；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-09", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261209-AUTO2", "name": "11 月 PPI", "date_start": "2026-12-09", "date_end": "2026-12-09", "type": "宏观数据", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["周期", "有色", "化工"], "entry_window": 3, "watch": "PPI 同比与剪刀差；PPI 能否转正决定上游利润修复", "invalidate": "仍处负区间且环比走弱时，上游涨价链逻辑不成立", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-09，A 股反应日 2026-12-09；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-09", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261210-01", "name": "美联储 12 月 FOMC（含点阵图）", "date_start": "2026-12-10", "date_end": "2026-12-10", "type": "政策窗口", "confirm": "官方公告", "strength": 3, "sectors": ["黄金", "成长股估值", "汇率"], "entry_window": 5, "watch": "是否加息 25bp（当前市场定价 67.5%）、点阵图对 2027 年的指引", "invalidate": "若点阵图显示 2027 年不再加息，全球风险资产估值修复；若上调终端利率，压制成长股。", "targets": {"emotion": [{"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 4.87, "vs": 4.81, "bench": "沪深300", "bench_chg": 0.06, "amt": 18.6, "mcap": 587.4, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 3.16}, {"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 3.4, "vs": 3.34, "bench": "沪深300", "bench_chg": 0.06, "amt": 64.3, "mcap": 4892.9, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.32}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 3.1, "vs": 3.04, "bench": "沪深300", "bench_chg": 0.06, "amt": 15.9, "mcap": 842.2, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.89}], "main": [{"code": "601899.SH", "name": "紫金矿业", "why": "有色龙头，铜金双主业，通胀直接受益", "pct": 3.4, "vs": 3.34, "bench": "沪深300", "bench_chg": 0.06, "amt": 64.3, "mcap": 4892.9, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.32}, {"code": "600988.SH", "name": "赤峰黄金", "why": "海外金矿占比高，降息/通胀直接受益，弹性最大", "pct": 4.87, "vs": 4.81, "bench": "沪深300", "bench_chg": 0.06, "amt": 18.6, "mcap": 587.4, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 3.16}, {"code": "600547.SH", "name": "山东黄金", "why": "矿产金纯度最高，降息直接受益", "pct": 3.1, "vs": 3.04, "bench": "沪深300", "bench_chg": 0.06, "amt": 15.9, "mcap": 842.2, "overlap": true, "evidence_level": "业务关联", "evidence_rank": 2, "evidence_checked": "2026-11-26", "evidence_src": "待核", "turn": 1.89}]}, "status": "待验证", "action_kind": "defend", "date_note": "会议美东 12/8—9，决议北京时间 12/10 凌晨，A 股反应日 12/10。", "note": "美东 12/09（周三）14:00 = 北京 12/10 03:00，A 股首个反应日 12/10（周四）。本次含 SEP 点阵图，信息量大于 10 月那场。", "evidence": {"checked": "2026-10-24", "verdict": "已核", "src": ["https://tradersweek.com/zh/economic-calendar"], "note": "日期取自公司财报日历／BLS 官方日程；date_start 已换算为 A 股首个反应日。"}, "reaction_t": "2026-12-10", "date_local": {"date": "2026-12-09", "tz": "America/New_York"}, "date_cn": "2026-12-10 03:00", "confirm_checked": "2026-10-25", "calendar_layer": "正式", "level": "S"}, {"id": "E-20261210-02", "name": "中央经济工作会议", "date_start": "2026-12-10", "date_end": "2026-12-11", "date_note": "惯例：12 月中旬前后，2025 年为 12/10—11。前一周通常先开政治局会议定调（2025 年为 12/8）。此处按 12/10（周四）排，官方通稿发布后校正。", "type": "政策窗口", "confirm": "惯例推测", "strength": 3, "sectors": ["内需消费", "新质生产力", "反内卷", "地产"], "entry_window": 7, "watch": "四个表述：① 2027 年增长目标口径（「5% 左右」还是「区间」）；② 赤字率与特别国债规模；③ 货币政策定调是否延续「适度宽松」；④ 扩内需、反内卷、新质生产力的排序（谁在前谁拿钱）。", "invalidate": "若通稿无增量工具（无新财政工具、赤字率不提、货币政策措辞回收），视为中性会议，不调仓。会前若政策主题板块已连续放量上涨，属提前兑现，会议当日反向。", "targets": {}, "status": "待验证", "action_kind": "defend", "evidence": {"checked": "2026-10-29", "verdict": "待核", "src": ["http://paper.people.com.cn/rmrb/pc/attachement/202512/09/b1e30605-20b1-4629-8a9b-95338dad459d.pdf"], "note": "日期为惯例推测（2025 年 12/10—11 举行），2026 年官方尚未公告。观察项 W 中的「中央经济工作会议」本次升级为正式事件。"}, "note": "定调型事件，作用是调结构不是开新仓（12 月还有 12/09 FOMC 点阵图、年末排名战）。会前的政策主题预期炒作通常提前 1—2 周，本库给 T-7 窗口。", "level": "S", "reaction_t": "2026-12-10", "confirm_checked": "2026-10-29", "calendar_layer": "正式"}, {"id": "E-20261211-AUTO", "name": "美国 CPI（2026-11）", "date_start": "2026-12-11", "date_end": "2026-12-11", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["全球流动性", "黄金", "有色"], "entry_window": 3, "watch": "核心 CPI 环比、服务通胀粘性、房租分项；决定美联储降息路径与全球风险偏好", "invalidate": "单月波动不改趋势，连续两月同向才算信号；对 A 股是二阶传导，不单独作为开仓依据", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-10，A 股反应日 2026-12-11（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-11", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261215-AUTO", "name": "11 月社零 / 工业增加值", "date_start": "2026-12-15", "date_end": "2026-12-15", "type": "宏观数据", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["消费", "顺周期"], "entry_window": 3, "watch": "社零同比、剔除汽车后的分项、工业增加值；内需验证", "invalidate": "低于预期且连续两月才构成趋势；单月不做方向", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-15，A 股反应日 2026-12-15；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-15", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261216-AUTO", "name": "美国 PPI（2026-11）", "date_start": "2026-12-16", "date_end": "2026-12-16", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["周期", "有色"], "entry_window": 3, "watch": "核心 PPI 环比、上游商品价格；验证通胀是否二次抬头", "invalidate": "弱化时对 A 股无方向意义，不单独作为开仓依据", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-15，A 股反应日 2026-12-16（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-16", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261227-AUTO", "name": "11 月工业企业利润", "date_start": "2026-12-27", "date_end": "2026-12-27", "type": "宏观数据", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["周期", "制造业"], "entry_window": 3, "watch": "利润同比、上游与中下游分化；盈利周期位置", "invalidate": "滞后指标，单月不单独做方向", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-27，发布日 2026-12-27 为周日，A 股反应日顺延至 2026-12-28；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-28", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20261231-AUTO", "name": "12 月官方制造业 PMI", "date_start": "2026-12-31", "date_end": "2026-12-31", "type": "宏观数据", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["顺周期", "制造业"], "entry_window": 3, "watch": "能否守住荣枯线 50、新订单与生产分项、出厂价格指数", "invalidate": "只在明显偏离 50 时才有方向意义，不单独作为开仓依据", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2026-12-31，A 股反应日 2026-12-31；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2026-12-31", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20270106-01", "name": "CES 2027 消费电子展", "date_start": "2027-01-06", "date_end": "2027-01-09", "type": "产业大会", "confirm": "官方公告", "strength": 3, "level": "S", "sectors": ["AI算力", "AI 应用", "消费电子", "人形机器人"], "entry_window": 14, "watch": "端侧 AI 芯片（NPU 算力/功耗）、物理 AI 与机器人整机、AI 眼镜与可穿戴、车载智能座舱", "invalidate": "若主线仍停留在参数比拼、无端侧落地产品，按惯例事件处理，不排标的。", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "CTA 官网明示 CES 2027 于 2027-01-06~01-09 在拉斯维加斯举办，官方已公告。", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": ["https://www.ces.tech/", "https://www.ces.tech/healthprotocols"], "note": "官方页面两处均写 Jan 6-9, 2027。候选日程原记 1/5~1/8，已更正。"}, "reaction_t": "2027-01-06", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "far_note": "距今 >45 天，先建壳不排标的；2026-12-20 起进入排标的窗口。"}, {"id": "E-20270111-AUTO", "name": "美国非农（2026-12）", "date_start": "2027-01-11", "date_end": "2027-01-11", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["全球流动性", "出口链"], "entry_window": 3, "watch": "新增就业、失业率、平均时薪同比；影响降息预期", "invalidate": "单月易受飓风/罢工扰动，看三个月均值；A 股只在预期大幅摆动时有反应", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2027-01-08，A 股反应日 2027-01-11（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2027-01-11", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20270114-AUTO", "name": "美国 CPI（2026-12）", "date_start": "2027-01-14", "date_end": "2027-01-14", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["全球流动性", "黄金", "有色"], "entry_window": 3, "watch": "核心 CPI 环比、服务通胀粘性、房租分项；决定美联储降息路径与全球风险偏好", "invalidate": "单月波动不改趋势，连续两月同向才算信号；对 A 股是二阶传导，不单独作为开仓依据", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2027-01-13，A 股反应日 2027-01-14（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2027-01-14", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20270115-AUTO", "name": "美国 PPI（2026-12）", "date_start": "2027-01-15", "date_end": "2027-01-15", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["周期", "有色"], "entry_window": 3, "watch": "核心 PPI 环比、上游商品价格；验证通胀是否二次抬头", "invalidate": "弱化时对 A 股无方向意义，不单独作为开仓依据", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2027-01-14，A 股反应日 2027-01-15（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2027-01-15", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20270128-AUTO", "name": "美联储 FOMC（2027-01-26~2027-01-27）", "date_start": "2027-01-28", "date_end": "2027-01-28", "type": "政策窗口", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["全球流动性", "成长股估值"], "entry_window": 3, "watch": "声明措辞变化、点阵图利率中值、缩表节奏；含点阵图的会议权重更高", "invalidate": "无点阵图的会议只作背景，不改仓位", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2027-01-27，A 股反应日 2027-01-28（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2027-01-28", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20270208-AUTO", "name": "美国非农（2027-01）", "date_start": "2027-02-08", "date_end": "2027-02-08", "type": "海外宏观", "confirm": "官方公告", "strength": 1, "level": "B", "sectors": ["全球流动性", "出口链"], "entry_window": 3, "watch": "新增就业、失业率、平均时薪同比；影响降息预期", "invalidate": "单月易受飓风/罢工扰动，看三个月均值；A 股只在预期大幅摆动时有反应", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "官方发布日 2027-02-05，A 股反应日 2027-02-08（按工作日推算，未扣法定节假日，临近需校正）；fetch_sources.py 官方日历比对自动补录", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": [], "note": "官方日历比对"}, "reaction_t": "2027-02-08", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "auto_added": true}, {"id": "E-20270301-01", "name": "MWC 2027 世界移动通信大会", "date_start": "2027-03-01", "date_end": "2027-03-04", "type": "产业大会", "confirm": "官方公告", "strength": 2, "level": "A", "sectors": ["通信", "AI 应用", "消费电子"], "entry_window": 10, "watch": "6G 与 Open Telco AI、端侧 AI 终端、D2D 卫星直连", "invalidate": "无中国厂商实质参与或议题与 A 股链无关时，只作背景。", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "GSMA 官网 Event dates: 1–4 March 2027，Fira Gran Via 巴塞罗那。", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": ["https://www.mwcbarcelona.com/", "https://mwcbarcelona.com/plan-your-visit"], "note": "官方页面两处均写 1-4 March 2027。候选日程原记「2 月末」，已更正。"}, "reaction_t": "2027-03-01", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "far_note": "距今 >45 天，先建壳不排标的。"}, {"id": "E-20270717-01", "name": "WAIC 2027 世界人工智能大会（十周年）", "date_start": "2027-07-17", "date_end": "2027-07-20", "type": "产业大会", "confirm": "官方公告", "strength": 3, "level": "S", "sectors": ["AI算力", "AI 应用", "人形机器人", "数据要素"], "entry_window": 14, "watch": "国产算力与超节点、具身智能商用、AI 全球治理、大模型落地", "invalidate": "若仅为展示而无订单/政策落地，按惯例事件处理。", "targets": {"emotion": [], "main": []}, "status": "待验证", "date_note": "2026 大会闭幕式组委会宣布：2027 年 7 月 17—20 日上海举办，主题拟「智能伙伴·共生未来」。 7/17 为周六，A 股首个反应交易日为 7/19（周一）。", "action_kind": "none", "evidence": {"checked": "2026-11-12", "verdict": "已核", "src": ["https://www.worldaic.com.cn/"], "note": "组委会闭幕式宣布日期，属官方口径；主场馆仍为浦东世博+张江+西岸三地四馆。"}, "reaction_t": "2027-07-19", "confirm_checked": "2026-11-12", "calendar_layer": "正式", "far_note": "距今 >45 天，先建壳不排标的。"}], "watch": [{"id": "W-01", "name": "宇树科技三季报后走势", "window": "10/29 起", "why": "上市首份财报后的定价重估，直接影响整条机器人链的估值锚（PE 432 倍）　【2026-11-11 复盘】三季报当日 10/29 收跌 -4.82%（收 662.39），此后震荡走强，11/11 收 765.00，区间 +15.49%；11/09 +9.04%、11/10 +6.29% 两日加速。三季报不是利空，反而成了启动点。", "play": "已结项：结论是「财报后回踩即买点」，可作为下次同类型（新股首份财报）的模板。", "trigger": "10/29 三季报披露（已列入事件库 E-20261029-02）", "due": "2026-11-05", "resolved": true}, {"id": "W-02", "name": "华为 Mate 90 RS 非凡大师开售", "window": "11/11（GSMArena 预计，待官方）", "why": "Mate 90 系列已于 10/1 发布并开售（麒麟 9030/9035/9050），RS 版 11/11 才上市；这是华为链 11 月唯一还没兑现的节点", "play": "开售 ≠ 发布，只观察华为链在 11 月中的成交额与备货消息，不单独作为开仓依据", "trigger": "华为商城开售页 / 官方公告", "due": "2026-11-18", "resolved": false}, {"id": "W-04", "name": "特斯拉股东大会", "window": "12/4", "why": "Optimus 量产细节、薪酬方案", "play": "11 月底预热", "trigger": "已公告，超出 30 天窗口，11 月初纳入", "due": "2026-12-08", "resolved": false}, {"id": "W-06", "name": "10 月政治局会议", "window": "10 月底（待确认）", "why": "分析经济形势，可能定调增量政策（10 月底已过，待核实是否召开，未开则顺延至 12 月政治局会议 W-10）　【2026-11-11 核实】10/26 政治局会议已召开（讨论拟提请五中全会审议的文件），非经济主题，无独立催化；五中全会 10/26—10/29 已补录为事件。", "play": "若确认召开，T-3 看政策预期方向", "trigger": "新华社通稿", "due": "2026-11-06", "resolved": true}, {"id": "W-07", "name": "AMD 财报（非七姐妹）", "window": "2026-11-04 起", "why": "AMD 数据中心 GPU 二线，财报是算力链次信号；非七姐妹，暂不排标的", "play": "非七姐妹，暂不排标的，只作算力链/设备链的辅助信号观察", "trigger": "原事件 E-20261104-01（2026-11-04）已从事件库移入观察项", "due": "2026-11-11", "resolved": false}, {"id": "W-08", "name": "高通 + ARM 财报（非七姐妹）", "window": "2026-11-05 起", "why": "高通/ARM 端侧 AI 芯片，映射消费电子；非七姐妹，暂不排标的", "play": "非七姐妹，暂不排标的，只作算力链/设备链的辅助信号观察", "trigger": "原事件 E-20261105-02（2026-11-05）已从事件库移入观察项", "due": "2026-11-12", "resolved": false}, {"id": "W-09", "name": "应用材料财报（非七姐妹）", "window": "2026-11-13 起", "why": "应用材料是半导体设备景气风向标（映射北方华创/中微），但非七姐妹，暂不排标的", "play": "非七姐妹，暂不排标的，只作算力链/设备链的辅助信号观察", "trigger": "原事件 E-20261113-01（2026-11-13）已从事件库移入观察项", "due": "2026-11-19", "resolved": false}, {"id": "W-10", "name": "12 月政治局会议（分析 2027 年经济工作）", "window": "12 月上旬（2025 年为 12/8）", "why": "中央经济工作会议的定调前置会，措辞变化早于通稿一周释放", "play": "会议公报当晚读措辞，重点看财政/货币两句；不开新仓，只调结构", "trigger": "新华社通稿", "due": "2026-12-15", "resolved": false}, {"id": "W-11", "name": "COP31 气候大会（土耳其安塔利亚）", "window": "11/9—11/20", "why": "碳市场、绿电、CCUS 有主题脉冲，但对 A 股是弱关联", "play": "只观察碳交易与绿电运营商异动，不进主线仓位", "trigger": "11/9 开幕", "due": "2026-11-25", "resolved": false}, {"id": "W-12", "name": "G20 峰会（2026 美国主办）", "window": "11 月，日期未定", "why": "若与 APEC 形成连续的中美互动窗口，会影响 11 月下旬风险偏好", "play": "日期官宣后再评估；目前只作为 APEC 的备选观察", "trigger": "官方公告日期", "due": null, "resolved": false}]};
+
+const WEEK = ["日","一","二","三","四","五","六"];
+const KIND = {
+  build:{label:"关注窗口", cls:"build"},
+  defend:{label:"防守", cls:"defend"},
+  avoid:{label:"排雷", cls:"avoid"},
+  none:{label:"待确认", cls:"none"}
+};
+const NOW = new Date();
+const TODAY = new Date(NOW.getFullYear(), NOW.getMonth(), NOW.getDate());
+
+const D = s => s ? new Date(s + "T00:00:00") : null;
+const md2html = s => String(s == null ? "" : s).replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+const esc = s => String(s == null ? "" : s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+const pad = n => String(n).padStart(2, "0");
+const mdd = d => (d.getMonth()+1) + "/" + pad(d.getDate());
+const norm = c => String(c || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+
+/* ---------- crypto ---------- */
+const b64d = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const te = new TextEncoder();
+
+async function sha16(s){
+  const h = await crypto.subtle.digest("SHA-256", te.encode(s));
+  return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,"0")).join("").slice(0,16);
+}
+async function kekOf(code, saltB64){
+  const base = await crypto.subtle.importKey("raw", te.encode(code), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey(
+    {name:"PBKDF2", salt:b64d(saltB64), iterations:ITER, hash:"SHA-256"},
+    base, {name:"AES-GCM", length:256}, false, ["decrypt"]
+  );
+}
+async function gcmDec(key, ivB64, ctB64){
+  const pt = await crypto.subtle.decrypt({name:"AES-GCM", iv:b64d(ivB64)}, key, b64d(ctB64));
+  return new TextDecoder().decode(pt);
+}
+async function keyOfRaw(rawB64){
+  return crypto.subtle.importKey("raw", b64d(rawB64), {name:"AES-GCM"}, false, ["decrypt"]);
+}
+
+/* ---------- unlock ---------- */
+const $ = id => document.getElementById(id);
+const pct = v => {
+  if(v === null || v === undefined || v === "") return "—";
+  const n = Number(v);
+  if(isNaN(n)) return "—";
+  const txt = (n > 0 ? "+" : "") + n.toFixed(2) + "%";
+  const cls = n > 0 ? "up" : (n < 0 ? "down" : "");
+  return cls ? '<span class="' + cls + '">' + txt + '</span>' : txt;
+};
+function err(msg){ $("licErr").textContent = msg || ""; }
+
+function daysLeft(iso){
+  const e = D(iso);
+  if(!e) return 9999;
+  return Math.round((e - TODAY) / 86400000);
+}
+
+
+let CURRENT = {"name":"完整版","exp":"2099-12-31"};
+
+function lsGet(){ try{ return localStorage.getItem(LSKEY); }catch(e){ return null; } }
+function lsSet(v){ try{ localStorage.setItem(LSKEY, v); }catch(e){} }
+function lsDel(){ try{ localStorage.removeItem(LSKEY); }catch(e){} }
+
+
+/* ---------- 渲染 ---------- */
+function tOf(ev){ const s = D(ev.date_start); return s ? Math.round((s - TODAY) / 86400000) : null; }
+
+function fmtDate(ev){
+  const s = D(ev.date_start);
+  if(!s) return "待定";
+  const e = D(ev.date_end) || s;
+  if(+e === +s) return mdd(s) + "（周" + WEEK[s.getDay()] + "）";
+  return mdd(s) + "—" + mdd(e);
+}
+
+function action(ev, t){
+  if(t === null) return "日期待定｜不参与";
+  const kind = ev.action_kind || "build";
+  const ew = parseInt(ev.entry_window || 7, 10);
+  if(t < 0) return "已过 " + Math.abs(t) + " 天";
+  if(kind === "none") return t > 2 ? "只跟踪，不选个股" : "**T 日｜看数据定方向，不选股**";
+  if(kind === "avoid"){
+    if(t === 0) return "**T 日｜落地，不追**";
+    if(t <= 5)  return "T-" + t + "｜**不参与，防兑现**（仓位降到能承受一个跌停）";
+    if(t <= ew) return "T-" + t + "｜降仓准备：不加仓、清风险敞口";
+    return "T-" + t + "｜未到窗口（T-" + ew + " 才动）";
+  }
+  if(kind === "defend"){
+    if(t === 0) return "**T 日｜兑现，不留**";
+    if(t <= 3)  return "T-" + t + "｜只减不加，等结果";
+    if(t <= ew) return "T-" + t + "｜**小仓防守**（不是进攻）";
+    return "T-" + t + "｜未到窗口（T-" + ew + " 才动）";
+  }
+  if(t === 0) return "**T 日｜兑现，不追**";
+  if(t <= 3)  return "T-" + t + "｜只减不加";
+  if(t <= 7)  return "T-" + t + "｜窗口期（C 档为主）";
+  if(t <= ew) return "T-" + t + "｜窗口已开（跟踪 → 看 C 档）";
+  return "T-" + t + "｜未到窗口（T-" + ew + " 才动）";
+}
+
+function badge(t){
+  if(t === null) return '<span class="b dim">待定</span>';
+  if(t < 0) return '<span class="b past">已过</span>';
+  if(t === 0) return '<span class="b hot">T 日</span>';
+  if(t <= 3) return '<span class="b hot">T-' + t + '</span>';
+  if(t <= 7) return '<span class="b warm">T-' + t + '</span>';
+  if(t <= 14) return '<span class="b cool">T-' + t + '</span>';
+  return '<span class="b dim">T-' + t + '</span>';
+}
+function stars(n){ return "★".repeat(parseInt(n || 1, 10)); }
+function kindOf(ev){ return KIND[ev.action_kind] || KIND.build; }
+
+function vbadge(ev){
+  const v = ev.evidence && ev.evidence.verdict;
+  if(!v) return "";
+  if(v === "已核") return '<span class="v ok">已核</span>';
+  if(v === "存疑") return '<span class="v warn">存疑</span>';
+  return '<span class="v dim">未核</span>';
+}
+
+function levelBadge(e){
+  if(!e.level) return "";
+  const m = {"S":["S","全球顶级","lv-s"],"A":["A","国家级","lv-a"],"B":["B","区域","lv-b"],"公司":["司","公司级","lv-co"]};
+  const x = m[e.level];
+  return x ? '<span class="lv ' + x[2] + '">' + x[1] + '</span>' : "";
+}
+
+function causalBlock(e){
+  var h = "";
+  var cc = e.association;
+  if(cc){
+    h += '<div class="cl"><div class="cl-t">事件关联与反应记录</div>';
+    h += '<div class="cl-row"><b>关联成立吗</b>：' + esc(cc.linkage && cc.linkage.verdict || "") + '。' + esc(cc.linkage && cc.linkage.evidence || "") + '</div>';
+    h += '<div class="cl-row"><b>时间顺序吻合吗</b>：' + esc(cc.sequence && cc.sequence.verdict || "") + '。' + esc(cc.sequence && cc.sequence.evidence || "") + '</div>';
+    h += '<div class="cl-row"><b>价格反应有解释力吗</b>：' + esc(cc.reaction && cc.reaction.verdict || "") + '。' + esc(cc.reaction && cc.reaction.evidence || "") + '</div>';
+    if(cc.hypothesis) h += '<div class="cl-row"><b>待检验假设</b>：' + esc(cc.hypothesis) + '</div>';
+    if(cc.stocks_note) h += '<div class="cl-row"><b>注意</b>：' + esc(cc.stocks_note) + '</div>';
+    h += '</div>';
+  } else if(e.causal_chain){
+    // 兼容旧结构（已迁移前）
+    var old = e.causal_chain;
+    h += '<div class="cl"><div class="cl-t">因果链（旧结构，待迁移）</div>';
+    if(old.concept_path) h += '<div class="cl-row">' + esc(old.concept_path) + '</div>';
+    if(old.lesson) h += '<div class="cl-row"><b>教训</b> ' + esc(old.lesson) + '</div>';
+    h += '</div>';
+  }
+  var pb = e.playbook;
+  if(pb){
+    h += '<div class="cl"><div class="cl-t">作战预案</div>';
+    if(pb.ref) h += '<div class="cl-row">' + esc(pb.ref) + '</div>';
+    if(pb.if_then) h += '<div class="cl-row"><b>若</b> ' + esc(pb.if_then) + '</div>';
+    if(pb.if_not) h += '<div class="cl-row"><b>否则</b> ' + esc(pb.if_not) + '</div>';
+    if(pb.watch_start) h += '<div class="cl-row"><b>监控起点</b> ' + esc(pb.watch_start) + '</div>';
+    h += '</div>';
+  }
+  return h;
+}
+
+function vsTag(o){
+  if(o.vs === undefined || o.vs === null) return "";
+  const b = (o.bench === "沪深300") ? "大盘" : "板块";
+  return o.vs < 0
+    ? '<span class="vs weak">弱于' + b + Math.abs(o.vs).toFixed(1) + 'pt</span>'
+    : '<span class="vs strong">强于' + b + o.vs.toFixed(1) + 'pt</span>';
+}
+
+function moversBlock(ev){
+  const m = ev.top_movers;
+  if(!m || !m.list || !m.list.length) return "";
+  const rows = m.list.map(x =>
+    '<div class="mv-row"><span class="nm">' + esc(x.name) + '</span>' +
+    '<span class="cd">' + esc(x.code) + '</span>' +
+    '<span class="why">' + esc(x.why || "") + '</span>' +
+    '<span class="pc ' + (x.chg >= 0 ? "up" : "down") + '">' + (x.chg > 0 ? "+" : "") + Number(x.chg).toFixed(1) + '%</span></div>'
+  ).join("");
+  return '<div class="mv"><div class="mv-h">区间涨幅前 5</div>' + rows +
+    '<div class="mv-b">' + esc(m.d0) + ' → ' + esc(m.d1) + ' 收盘' +
+    (m.read ? '｜' + esc(m.read) : '') + '</div></div>';
+}
+
+function renderStats(evs){
+  const live = evs.filter(e => { const t = tOf(e); return t !== null && t >= 0 && t <= 7; }).length;
+  const open = evs.filter(e => { const t = tOf(e); return t !== null && t >= 0 && t <= parseInt(e.entry_window || 7, 10); }).length;
+  const pend = evs.filter(e => { const d = D(e.date_start); return d && d < TODAY && !e.review; }).length;
+  const done = evs.filter(e => e.review).length;
+  $("stats").innerHTML = [[live,"未来 7 天事件"],[open,"窗口已开"],[pend,"待复盘"],[done,"已复盘"]]
+    .map(([n,l]) => '<div class="stat"><b>' + n + '</b><span>' + l + '</span></div>').join("");
+}
+
+function causalCard(e){
+  return '<div class="det"><div class="det-t">' + esc(e.name) + ' <span class="det-d">' + fmtDate(e) + '</span></div>' +
+    causalBlock(e) + '</div>';
+}
+
+/* 原「已验证因果链 · 不受窗口限制」是过期事件常驻的原因：
+   它只判内容字段、不看日期，GTC 柏林过了 20 多天还占一整块。
+   现在拆成三处，各自有明确的时间边界：
+     · 作战预案 —— 未发生、写了 playbook，留在主视图
+     · 复盘区   —— 已发生且已复盘，只在复盘区出现一次（不在这里重复）
+     · 历史案例库 —— 有因果记录但超过 30 天且没复盘，默认折叠 */
+function sectionCausal(evs){
+  const has = e => e.association || e.causal_chain || e.playbook;
+  const plan = evs.filter(e => e.playbook && !e.review && (tOf(e) === null || tOf(e) >= 0));
+  const old = evs.filter(e => {
+    if(!has(e) || e.playbook || e.review) return false;
+    const t = tOf(e);
+    return t === null || t < -30;
+  });
+  let h = '';
+  if(plan.length){
+    h += '<section><h2>作战预案 <span class="cnt">' + plan.length + ' 个 · 事件未发生</span></h2>' +
+      '<div class="sp"></div>' + plan.map(causalCard).join('') + '</section>';
+  }
+  if(old.length){
+    h += '<section><h2>历史案例库 <span class="cnt">' + old.length + ' 条 · 已过 30 天，默认收起</span></h2>' +
+      '<div id="archMore" style="display:none">' + old.map(causalCard).join('') + '</div>' +
+      '<button class="more-btn" data-more="展开历史案例 ' + old.length + ' 条" ' +
+      'onclick="toggleMore(\'archMore\',this)">展开历史案例 ' + old.length + ' 条</button></section>';
+  }
+  return h;
+}
+
+function sectionNote(){
+  const m = DATA.meta || {};
+  const manual = (m.week_note_manual || "").trim();
+  const auto = (m.week_note_auto || "").trim();
+  const merged = (m.week_note || "").trim();
+  if(!manual && !auto && !merged) return "";
+  let h = '<section><h2>这一周怎么打</h2>';
+  if(manual){
+    let tag = "人工判断", cls = "note";
+    const md = m.week_note_manual_date || "";
+    let gap = 0;
+    if(md){
+      const dd = D(md);
+      gap = dd ? Math.round((TODAY - dd) / 86400000) : 0;
+      tag = "人工判断 · 写于 " + md.slice(5).replace("-", "/");
+      if(gap > 5) cls = "note note-old";
+    }
+    // 超过 5 天的判断默认收起：它是当时的看法，不是当下的结论，不该占首屏
+    if(gap > 5){
+      h += '<details class="' + cls + '"><summary class="note-tag">' + esc(tag) +
+        '，已过期 ' + gap + ' 天 · 点击展开（仅作背景）</summary><p>' + md2html(esc(manual)) + '</p></details>';
+    } else {
+      h += '<div class="' + cls + '"><div class="note-tag">' + esc(tag) + '</div><p>' + md2html(esc(manual)) + '</p></div>';
+    }
+  }
+  if(auto){
+    h += '<div class="note note-auto"><div class="note-tag">自动生成 · ' + esc((m.updated || "").slice(5).replace("-", "/")) + ' 重算</div><p>' + md2html(esc(auto)) + '</p></div>';
+  } else if(!manual && merged){
+    h += '<div class="note"><p>' + md2html(esc(merged)) + '</p></div>';
+  }
+  if(m.scan_gaps && m.scan_gaps.length){
+    h += '<div class="gap-note">涨停扫描缺 ' + m.scan_gaps.length + ' 个交易日（' + esc(m.scan_gaps.join("、")) + '）：源只提供当日数据，无法回溯，这几天的方向强度不可比。</div>';
+  }
+  return h + '</section>';
+}
+
+function sectionOverdue(evs){
+  const rows = evs.filter(e => {
+    const d = D(e.date_start);
+    if(!d || d >= TODAY || e.review) return false;
+    // 超过 14 天仍未复盘的，不再天天提醒（进历史案例库），避免老账刷屏
+    return Math.round((TODAY - d) / 86400000) <= 14;
+  }).map(e => {
+    const d = D(e.date_start);
+    return {e: e, gap: Math.round((TODAY - d) / 86400000)};
+  }).sort((a, b) => b.gap - a.gap);
+  if(!rows.length) return "";
+  let h = '<section><h2>逾期未复盘 <span class="cnt">' + rows.length + ' 条 · 事件已过但没记反应</span></h2><div class="od">';
+  rows.forEach(r => {
+    const e = r.e;
+    const codes = (function(){
+      const tg = e.targets || {}, out = {};
+      (tg.lines || [tg]).forEach(g => ["emotion", "main"].forEach(k => (g[k] || []).forEach(t => { if(t.code) out[t.code] = 1; })));
+      return Object.keys(out).length;
+    })();
+    h += '<div class="od-row"><span class="od-gap">逾期 ' + r.gap + ' 天</span>' +
+      '<span class="od-name">' + esc(e.name) + '</span>' +
+      '<span class="od-meta">' + fmtDate(e) + ' · ' + esc(e.level || "") + ' · 标的 ' + codes + ' 只</span></div>';
+  });
+  return h + '</div></section>';
+}
+
+function inCore(e){
+  const t = tOf(e);
+  return t !== null && t >= 0 && t <= 5;
+}
+
+function toggleMore(id, btn){
+  const el = document.getElementById(id);
+  const hidden = el.style.display === "none";
+  el.style.display = hidden ? "block" : "none";
+  btn.textContent = hidden ? "收起" : (btn.dataset.more || "展开全部");
+  btn.className = hidden ? "more-btn open" : "more-btn";
+}
+
+function tocRow(e){
+  const t = tOf(e);
+  return '<a class="toc-i" href="#ev-' + esc(e.id) + '"><span class="td2">' + fmtDate(e) + '</span>' +
+    '<span class="tn">' + esc(e.name) + '</span>' + badge(t) + '</a>';
+}
+
+function sectionTOC(evs){
+  const items = evs.filter(e => { const t = tOf(e); return t !== null && t >= 0 && t <= 30; });
+  if(!items.length) return "";
+  const core = items.filter(inCore);
+  const rest = items.filter(e => !inCore(e));
+  let h = '<section><h2>速览 <span class="cnt">' + core.length + ' 个 · 5 日内</span></h2>';
+  h += '<div class="toc">' + (core.length ? core.map(tocRow).join("") : '<div class="empty" style="border:none">5 日内无事件</div>') + '</div>';
+  if(rest.length){
+    const label = "展开全部 " + rest.length + " 个（5 日外）";
+    h += '<div class="toc" id="tocMore" style="display:none;margin-top:8px">' + rest.map(tocRow).join("") + '</div>';
+    h += '<button class="more-btn" data-more="' + label + '" onclick="toggleMore(&#39;tocMore&#39;,this)">' + label + '</button>';
+  }
+  h += '</section>';
+  return h;
+}
+
+function sectionLive(evs){
+  const rows = evs.filter(e => {
+    const t = tOf(e);
+    if(t === null) return false;
+    if(t >= 0 && t <= 7) return true;
+    return t > 7 && t <= parseInt(e.entry_window || 7, 10) + 7;
+  });
+  if(!rows.length) return '<section><h2>窗口内</h2><div class="empty">当前无事件在窗口内</div></section>';
+  const body = rows.map(e => {
+    const t = tOf(e), k = kindOf(e);
+    return '<div class="live-item">' + badge(t) +
+      '<div class="live-main"><div class="live-name">' + esc(e.name) +
+      '<em>' + k.label + '型 · ' + stars(e.strength) + '</em>' + vbadge(e) + '</div>' +
+      '<div class="live-act ' + k.cls + '">' + md2html(esc(action(e, t))) + '</div></div></div>';
+  }).join("");
+  return '<section><h2>窗口内 <span class="cnt">' + rows.length + ' 个</span></h2><div class="live">' + body + '</div></section>';
+}
+
+function tlCard(e){
+  const t = tOf(e), k = kindOf(e);
+  const cls = (t !== null && t < 0 ? "past " : "") + k.cls;
+  return '<div class="tl-item ' + cls + '" id="ev-' + esc(e.id) + '"><div class="tl-dot"></div><div class="ev">' +
+    '<div class="ev-date">' + fmtDate(e) + badge(t) + '</div>' +
+    '<div class="ev-name">' + esc(e.name) + '</div>' +
+    '<div class="ev-meta"><span class="ev-tag">' + esc(e.type || "") + '</span>' +
+    '<span>' + stars(e.strength) + '</span><span>' + esc(e.confirm) + '</span>' +
+    '<span>' + k.label + '型</span>' + levelBadge(e) + '</div>' +
+    '<div class="ev-act ' + k.cls + '">' + md2html(esc(action(e, t))) + '</div></div></div>';
+}
+
+function sectionTimeline(evs){
+  const items = evs.filter(e => { const t = tOf(e); return t !== null && t >= 0 && t <= 30; });
+  if(!items.length) return "";
+  const core = items.filter(inCore);
+  const rest = items.filter(e => !inCore(e));
+  let h = '<section><h2>时间轴 <span class="cnt">' + core.length + ' 个 · 5 日内</span></h2>';
+  h += '<div class="tl">' + (core.length ? core.map(tlCard).join("") : '<div class="empty">5 日内无事件</div>') + '</div>';
+  if(rest.length){
+    const label = "展开全部 " + rest.length + " 个（5 日外）";
+    h += '<div class="tl" id="tlMore" style="display:none;margin-top:10px">' + rest.map(tlCard).join("") + '</div>';
+    h += '<button class="more-btn" data-more="' + label + '" onclick="toggleMore(&#39;tlMore&#39;,this)">' + label + '</button>';
+  }
+  h += '</section>';
+  return h;
+}
+
+function sectionDetail(evs){
+  const open = evs.filter(e => { const t = tOf(e); return t !== null && t >= 0 && t <= 5; });
+  if(!open.length) return "";
+  const cards = open.map(e => {
+    const t = tOf(e), k = kindOf(e);
+    let h = '<div class="det"><div class="det-h"><span class="id">' + esc(e.id) + '</span><h3>' + esc(e.name) + '</h3>' + badge(t) + '</div>';
+    h += '<div class="det-sub">' + fmtDate(e) + '｜' + stars(e.strength) + '｜' + esc(e.confirm) + ' ｜窗口 T-' + parseInt(e.entry_window || 7, 10) + ' ' + levelBadge(e) + ' ' + vbadge(e) + '</div>';
+    h += '<div class="ev-act ' + k.cls + '">' + md2html(esc(action(e, t))) + '</div>';
+    if(e.date_note) h += '<blockquote>' + md2html(esc(e.date_note)) + '</blockquote>';
+    if(e.sectors && e.sectors.length) h += '<div class="kv"><b>映射</b>' + e.sectors.map(esc).join("、") + '</div>';
+    if(e.watch) h += '<div class="kv"><b>看什么</b>' + esc(e.watch) + '</div>';
+    if(e.invalidate) h += '<div class="kv"><b>失效</b>' + esc(e.invalidate) + '</div>';
+    h += causalBlock(e);
+    const tg = e.targets || {};
+    const lines = Array.isArray(tg.lines) ? tg.lines : [];
+    const emo = lines.length ? [] : (Array.isArray(tg.emotion) ? tg.emotion : []);
+    const mai = lines.length ? [] : (Array.isArray(tg.main) ? tg.main : []);
+    if(e.action_kind === "avoid" || e.action_kind === "none"){
+      if(!e.invalidate) h += '<div class="kv">本事件不作为开仓依据，作用是调整仓位，不是改变持仓结构。</div>';
+    } else if(lines.length){
+      lines.forEach(L => {
+        const le = Array.isArray(L.emotion) ? L.emotion : [];
+        const lm = Array.isArray(L.main) ? L.main : [];
+        h += '<div class="tg-h">' + esc(L.line) + '<span>' + esc(L.basis || "") + '</span></div>';
+        if(le.length){
+          h += '<table><thead><tr><th>情绪</th><th>涨幅</th><th>理由</th></tr></thead><tbody>';
+          le.forEach(o => {
+            const dup = lm.some(m => m.code === o.code);
+            h += '<tr><td>' + esc(o.name) + (o.code ? ' <span class="code">' + esc(o.code) + '</span>' : '') +
+              (dup ? '<span class="ov">重合</span>' : '') + '</td><td class="' + (o.pct >= 0 ? 'up' : 'down') + '">' +
+              (o.pct > 0 ? "+" : "") + Number(o.pct).toFixed(1) + '%' + vsTag(o) + '</td><td>' + esc(o.why) + '</td></tr>';
+          });
+          h += '</tbody></table>';
+        }
+        if(lm.length){
+          h += '<table><thead><tr><th>中军</th><th>成交额</th><th>流通市值</th><th>理由</th></tr></thead><tbody>';
+          lm.forEach(o => {
+            h += '<tr><td>' + esc(o.name) + (o.code ? ' <span class="code">' + esc(o.code) + '</span>' : '') +
+              (o.overlap ? '<span class="ov">重合</span>' : '') + '</td><td>' + Number(o.amt).toFixed(1) + '亿</td>' +
+              '<td>' + Number(o.mcap).toFixed(0) + '亿</td><td>' + esc(o.why) + '</td></tr>';
+          });
+          h += '</tbody></table>';
+        }
+      });
+    } else if(emo.length || mai.length){
+      if(emo.length){
+        h += '<div class="tg-h">情绪标的<span>当日涨跌幅前 3 · 看弹性</span></div>';
+        h += '<table><thead><tr><th>标的</th><th>涨幅</th><th>理由</th></tr></thead><tbody>';
+        emo.forEach(o => {
+          const dup = mai.some(m => m.code === o.code);
+          h += '<tr><td>' + esc(o.name) + (o.code ? ' <span class="code">' + esc(o.code) + '</span>' : '') +
+            (dup ? '<span class="ov">重合</span>' : '') + '</td><td class="' + (o.pct >= 0 ? 'up' : 'down') + '">' +
+            (o.pct > 0 ? "+" : "") + Number(o.pct).toFixed(1) + '%' + vsTag(o) + '</td><td>' + esc(o.why) + '</td></tr>';
+        });
+        h += '</tbody></table>';
+      }
+      if(mai.length){
+        h += '<div class="tg-h">中军<span>成交额前 3 · 看容量与承接</span></div>';
+        h += '<table><thead><tr><th>标的</th><th>成交额</th><th>流通市值</th><th>理由</th></tr></thead><tbody>';
+        mai.forEach(o => {
+          h += '<tr><td>' + esc(o.name) + (o.code ? ' <span class="code">' + esc(o.code) + '</span>' : '') +
+            (o.overlap ? '<span class="ov">重合</span>' : '') + '</td><td>' + Number(o.amt).toFixed(1) + '亿</td>' +
+            '<td>' + Number(o.mcap).toFixed(0) + '亿</td><td>' + esc(o.why) + '</td></tr>';
+        });
+        h += '</tbody></table>';
+      }
+    } else {
+      h += '<div class="kv" style="color:#a09b93">尚无标的清单</div>';
+    }
+    if(e.note) h += '<blockquote>' + md2html(esc(e.note)) + '</blockquote>';
+    if(e.evidence && e.evidence.note) h += '<div class="kv" style="font-size:12px;color:#a09b93"><b>核实</b>' + esc(e.evidence.note) + '</div>';
+    h += moversBlock(e);
+    return h + '</div>';
+  }).join("");
+  return '<section><h2>窗口已开 · 逐个拆解 <span class="cnt">' + open.length + ' 个</span></h2>' + cards + '</section>';
+}
+
+function sectionReview(evs){
+  // 按事件发生日倒序（不是按复盘填写日）：读者要看「最近发生的事件结果如何」，
+  // 按填写日排会让同一批补写的旧事件靠前（GTC 柏林 10/20 就排到了第一个）
+  const done = evs.filter(e => e.review).sort((a, b) => String(b.date_start).localeCompare(String(a.date_start)));
+  const pend = evs.filter(e => { const t = tOf(e); return t !== null && t >= -7 && t < 0 && !e.review; });
+  let h = '<section><h2>复盘</h2>';
+  if(pend.length) h += '<div class="empty" style="text-align:left;margin-bottom:10px">待打分：' + pend.map(e => '<b>' + esc(e.name) + '</b>（过期 ' + Math.abs(tOf(e)) + ' 天）').join("、") + '</div>';
+  if(!done.length) return h + '<div class="empty">暂无复盘记录</div></section>';
+  const LIMIT = 3;
+  const show = done.slice(0, LIMIT), rest = done.slice(LIMIT);
+  if(rest.length){
+    h += '<div style="font-size:11.5px;color:#a09b93;margin-bottom:8px">' +
+      '只列最近 ' + LIMIT + ' 条，更早的 ' + rest.length + ' 条已收起（数据仍保留，可展开）</div>';
+  }
+  const rvCard = e => {
+    const r = e.review;
+    let c = '';
+    const flag = r.valid === true ? '<span class="flag ok">有效</span>' : r.valid === false ? '<span class="flag bad">无效</span>' : '<span class="flag na">无法归因</span>';
+    c += '<div class="rv"><div class="rv-h"><h3>' + esc(e.name) + '</h3>' + flag + '</div>';
+    c += '<div class="grid4">' +
+      '<div class="cell"><i>T 日绝对</i><b>' + pct(r.abs_T) + '</b></div>' +
+      '<div class="cell"><i>T 日超额</i><b>' + pct(r.excess_T) + '</b></div>' +
+      '<div class="cell"><i>T+1 绝对</i><b>' + pct(r.abs_T1) + '</b></div>' +
+      '<div class="cell"><i>T+1 超额</i><b>' + pct(r.excess_T1) + '</b></div></div>';
+    if(r.verdict) c += '<div class="kv"><b>结论</b>' + esc(r.verdict) + '</div>';
+    if(r.note) c += '<div class="kv" style="color:#4a4540">' + esc(r.note) + '</div>';
+    if(r.self_error) c += '<blockquote><b>我的判断错在哪</b>：' + esc(r.self_error) + '</blockquote>';
+    c += moversBlock(e);
+    c += '</div>';
+    return c;
+  };
+  h += show.map(rvCard).join("");
+  if(rest.length){
+    h += '<div id="rvMore" style="display:none">' + rest.map(rvCard).join("") + '</div>';
+    h += '<button class="more-btn" data-more="展开更早的 ' + rest.length + ' 条" ' +
+      'onclick="toggleMore(&#39;rvMore&#39;,this)">展开更早的 ' + rest.length + ' 条</button>';
+  }
+  const stat = {};
+  done.forEach(e => {
+    const k = e.type || "其他";
+    stat[k] = stat[k] || {n:0, ok:0, na:0};
+    const v = e.review.valid;
+    if(v === null || v === undefined) stat[k].na++;
+    else { stat[k].n++; if(v) stat[k].ok++; }
+  });
+  h += '<div class="ev" style="padding:4px 10px"><table><thead><tr><th>类型</th><th>可归因</th><th>判有效</th><th>胜率</th><th>无法归因</th></tr></thead><tbody>';
+  Object.keys(stat).forEach(k => {
+    const s = stat[k];
+    h += '<tr><td>' + esc(k) + '</td><td>' + s.n + '</td><td>' + s.ok + '</td><td>' + (s.n ? Math.round(s.ok / s.n * 100) + "%" : "—") + '</td><td>' + s.na + '</td></tr>';
+  });
+  h += '</tbody></table></div>';
+  h += '<div style="font-size:11.5px;color:#a09b93;margin-top:6px">样本少时严重失真，只作参考；无法归因不计入胜率。</div>';
+  return h + '</section>';
+}
+
+function wGap(w){
+  if(!w.due || w.resolved) return null;
+  const d = D(w.due);
+  return d ? Math.round((TODAY - d) / 86400000) : null;
+}
+
+function sectionWatch(){
+  const ws = (DATA.watch || []).slice().sort((a, b) => {
+    const ga = wGap(a), gb = wGap(b);
+    return (gb === null ? -999 : gb) - (ga === null ? -999 : ga);
+  });
+  if(!ws.length) return "";
+  const od = ws.filter(w => (wGap(w) || -1) > 0).length;
+  const cards = ws.map(w => {
+    const g = wGap(w);
+    const late = g !== null && g > 0;
+    const tag = w.resolved ? "已处理"
+      : g === null ? ("至 " + (w.due || "").slice(5).replace("-", "/"))
+      : late ? "逾期 " + g + " 天未处理" : (g === 0 ? "今天到期" : "剩 " + (-g) + " 天");
+    return '<div class="wt' + (late ? ' wt-od' : '') + '"><div class="wt-h"><span class="id">' + esc(w.id) + '</span><b>' + esc(w.name) + '</b>' +
+      '<span class="win">' + esc(w.window) + '</span>' +
+      '<span class="od-badge' + (late ? ' od-hot' : '') + '">' + esc(tag) + '</span></div>' +
+      '<p><b>为什么</b>' + esc(w.why) + '</p>' +
+      '<p><b>怎么打</b>' + esc(w.play) + '</p>' +
+      (w.trigger ? '<p><b>触发</b>' + esc(w.trigger) + '</p>' : '') + '</div>';
+  }).join("");
+  return '<section><h2>观察项 <span class="cnt">' + ws.length + ' 个' + (od ? ' · ' + od + ' 个已过期待处理' : ' · 日期未定不参与') + '</span></h2>' + cards + '</section>';
+}
+
+/* 数据过期检查：数据日期落后 2 个工作日以上就在顶部喊出来 */
+function wdaysBetween(a, b){
+  let n = 0, d = new Date(a.getTime());
+  while(d < b){
+    d.setDate(d.getDate() + 1);
+    if(d.getDay() !== 0 && d.getDay() !== 6) n++;
+  }
+  return n;
+}
+function renderStale(data){
+  const box = $("stale"); if(!box) return;
+  const meta = (data && data.meta) || {};
+  const m = String(meta.updated || meta.last_run || "").match(/(\d{4})-(\d{2})-(\d{2})/);
+  if(!m) return;
+  const up = new Date(+m[1], +m[2]-1, +m[3]);
+  const wd = wdaysBetween(up, TODAY);
+  if(wd < 2) return;
+  const head = (meta.as_of || "").indexOf("盘中") >= 0 ? "盘中快照" : "收盘数据";
+  box.hidden = false;
+  box.innerHTML = '<b>数据已过期</b>行情停在 ' + m[0] + '（' + esc(head) + '），已落后 <em>' + wd + '</em> 个交易日。' +
+    ' 在 WorkBuddy 里说一句「更新今天的」即可刷新。';
+}
+
+function boot(data){
+  DATA = data;
+  const evs = (data.events || []).slice().sort((a, b) => {
+    const x = D(a.date_start), y = D(b.date_start);
+    if(!x && !y) return 0;
+    if(!x) return 1;
+    if(!y) return -1;
+    return x - y;
+  });
+  $("today").textContent = TODAY.getFullYear() + "-" + pad(TODAY.getMonth()+1) + "-" + pad(TODAY.getDate()) + " 周" + WEEK[TODAY.getDay()];
+  // 跨年时两端都带年份，否则「10/22 — 08/31」会让人误以为是同一年
+  (function(){
+    const c0 = String(data.meta.coverage[0]), c1 = String(data.meta.coverage[1]);
+    const cross = c0.slice(0,4) !== c1.slice(0,4);
+    $("cover").textContent = "覆盖 " +
+      (cross ? c0 : c0.slice(5).replace("-","/")) + " — " +
+      (cross ? c1 : c1.slice(5).replace("-","/"));
+  })();
+  $("app").innerHTML = sectionNote() + sectionOverdue(evs) + sectionTOC(evs) + sectionLive(evs) + sectionDetail(evs) + sectionCausal(evs) + sectionTimeline(evs) + sectionReview(evs) + sectionWatch();
+  renderStats(evs);
+  renderStale(data);
+
+  const left = daysLeft(CURRENT.exp);
+  $("foot").innerHTML =
+    '<b>数据截至</b> ' + esc(data.meta.updated) + '<br>' +
+    '剩余天数与动作按打开当天实时计算，无需手动更新。<br>' +
+    '<div class="fh">免责声明</div>' +
+    '<span class="fz">本页全部数据来源于公开渠道并尽力核对，但不保证绝对完整与无误；如与交易所、指数编制机构或基金管理人正式披露不一致，一律以官方披露为准。所有分级、信号、筛选与主观判断，均为基于历史数据的统计规则或个人观点，不构成任何投资建议，不预测未来收益，也不代表任何产品的业绩承诺。使用者应独立判断并自行承担决策风险，据此操作，风险自担。</span>' +
+    '<div class="fh">作者信息</div>' +
+    '<span class="fz">作者：大S股市每日复盘　·　数据整理、制表与页面制作：本人独立完成　·　本页仅限内部研究使用，未经许可请勿转载或商用　·　页面更新于 <span style="white-space:nowrap">' + esc(BUILD) + '</span></span>';
+}
+
+/* ---------- 启动 ---------- */
+(function init(){
+  var v = $("ver"); if (v) v.textContent = "v" + BUILD;
+  $("main").style.display = "block";
+  boot(DATA);
+})();
+</script>
+</body>
+</html>
