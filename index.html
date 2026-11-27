@@ -19,6 +19,23 @@ body{font:14px/1.6 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;back
 .ix .n{font-size:11px;color:#9ca3af;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ix b{font-size:15px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.3px;white-space:nowrap}
 .ix .p{font-size:11.5px;font-variant-numeric:tabular-nums}
+/* 主要指数估值分位 */
+.val-panel{padding-bottom:12px}
+.vhead,.vrow{display:grid;grid-template-columns:1.3fr 1fr 1fr;gap:8px;align-items:center}
+.vhead{font-size:10.5px;color:#9ca3af;padding:0 2px 6px;border-bottom:1px solid var(--line)}
+.vhead span:not(:first-child){text-align:left}
+.vbody{display:flex;flex-direction:column}
+.vrow{padding:7px 2px;border-bottom:1px dashed #f0f1f3}
+.vrow:last-child{border-bottom:none}
+.vname{font-size:12.5px;font-weight:600;color:#1f2937;display:flex;align-items:baseline;gap:6px}
+.vname em{font-style:normal;font-size:10px;color:#9ca3af;font-weight:400}
+.vcell{display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;min-width:0}
+.vnum{font-size:12.5px;font-weight:650;font-variant-numeric:tabular-nums;color:#111827}
+.vp{height:6px;background:#eef0f3;border-radius:3px;overflow:hidden;min-width:20px}
+.vp i{display:block;height:100%;border-radius:3px}
+.vpc{font-size:11px;font-weight:650;font-variant-numeric:tabular-nums;min-width:38px;text-align:right}
+.vnote{font-size:10.5px;color:#9ca3af;line-height:1.6;margin-top:9px;padding-top:8px;border-top:1px solid var(--line)}
+.val-empty{font-size:12px;color:#b91c1c;padding:8px 0}
 .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px 14px;margin-bottom:14px}
 .panel h3{font-size:12px;font-weight:650;color:#6b7280;letter-spacing:.6px;margin-bottom:11px;display:flex;align-items:center;gap:8px}
 .panel h3 .tag{font-weight:500;color:#9ca3af;letter-spacing:0;font-size:11px}
@@ -123,6 +140,9 @@ body{padding:12px 10px 34px}
 .top h1{font-size:18px}
 .panel{padding:14px 14px 12px;border-radius:10px;margin-bottom:11px}
 .ix b{font-size:14px}
+.vhead,.vrow{grid-template-columns:1.1fr 1fr 1fr;gap:5px}
+.vcell{grid-template-columns:auto 1fr auto;gap:4px}
+.vnum{font-size:11.5px}.vpc{font-size:10px;min-width:34px}
 .jw i,.ja i{display:block;min-width:0;margin:0 0 1px}
 }
 </style><style>
@@ -164,10 +184,11 @@ body{padding:12px 10px 34px}
 <script>window.__hubGo||(window.__hubGo=function(e,u){e.preventDefault();var w=null;try{top.location.href=u;}catch(y){location.href=u;}return false;});</script>
 <div class="top">
   <h1>每日复盘工作台</h1>
-  <div class="sub">2026-11-27 周五 <b>08:48</b> 生成 · 数据日 <b>11-26</b> · 结论由各看板数据自动推导，点卡片看明细</div>
+  <div class="sub">2026-11-27 周五 <b>11:58</b> 生成 · 数据日 <b>11-26</b> · 结论由各看板数据自动推导，点卡片看明细</div>
 </div>
 <div class="brief" id="briefBox"><div class="bh"><h2>今日结论 · 结论先行</h2><span>截至 11-26 · 汇总各看板当日触发 · 由标准量价客观读数自动推导 · 点任意条目回到证据</span></div><div class="bs"><div class="bst">① 什么东西有异动 <b>53 条</b>（按读数幅度取前 6）</div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">1</span><div class="bt"><span class="bfrom">商品复盘</span>锡：近 20 期 7 条价格异动，最大 11-25 -9.42%</div><div class="bw">口径：单日绝对变化 ≥3%（阈值待校准），换月日已排除；最近一条 11-26 -3.99%，基准 较前结算。点条目看该品种曲线与异动表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">2</span><div class="bt"><span class="bfrom">商品复盘</span>白银：近 20 期 9 条价格异动，最大 11-25 -8.34%</div><div class="bw">口径：单日绝对变化 ≥3%（阈值待校准），换月日已排除；最近一条 11-25 -8.34%，基准 较前结算。点条目看该品种曲线与异动表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">3</span><div class="bt"><span class="bfrom">商品复盘</span>沥青：近 20 期 7 条价格异动，最大 11-05 -8.53%</div><div class="bw">口径：单日绝对变化 ≥3%（阈值待校准），换月日已排除；最近一条 11-20 +3.02%，基准 较前结算。点条目看该品种曲线与异动表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">4</span><div class="bt"><span class="bfrom">商品复盘</span>碳酸锂：近 20 期 7 条价格异动，最大 11-25 -8.08%</div><div class="bw">口径：单日绝对变化 ≥3%（阈值待校准），换月日已排除；最近一条 11-26 -3.16%，基准 较前结算。点条目看该品种曲线与异动表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">5</span><div class="bt"><span class="bfrom">商品复盘</span>原油：近 20 期 6 条价格异动，最大 11-05 -7.68%</div><div class="bw">口径：单日绝对变化 ≥3%（阈值待校准），换月日已排除；最近一条 11-18 -3.01%，基准 较前结算。点条目看该品种曲线与异动表。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">6</span><div class="bt"><span class="bfrom">商品复盘</span>乙二醇：近 20 期 8 条价格异动，最大 11-05 -5.99%</div><div class="bw">口径：单日绝对变化 ≥3%（阈值待校准），换月日已排除；最近一条 11-26 +5.98%，基准 较前结算。点条目看该品种曲线与异动表。</div><span class="bgo">点回证据 →</span></div></div><div class="bs"><div class="bst">② 依据成熟标准量价口径，什么值得看 <b>24 条</b>（按读数幅度取前 4）</div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">1</span><div class="bt"><span class="bfrom">商品复盘</span>白银：5 项客观读数同时处于极值</div><div class="bw">MA 组合判定为下行；250 期分位 0%（偏低）；近 5 期 -16.04%；跌破60期低点；11 月历史分布「历史偏弱」（仅统计，非预测）。仅描述已发生的价格位置，不含方向预测与仓位建议。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">2</span><div class="bt"><span class="bfrom">商品复盘</span>锡：5 项客观读数同时处于极值</div><div class="bw">MA 组合判定为下行；250 期分位 0%（偏低）；近 5 期 -15.04%；跌破60期低点；11 月历史分布「历史偏强」（仅统计，非预测）。仅描述已发生的价格位置，不含方向预测与仓位建议。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">3</span><div class="bt"><span class="bfrom">商品复盘</span>铜：4 项客观读数同时处于极值</div><div class="bw">MA 组合判定为下行；250 期分位 5%（偏低）；近 5 期 -10.89%；跌破60期低点。仅描述已发生的价格位置，不含方向预测与仓位建议。</div><span class="bgo">点回证据 →</span></div><div class="bi" data-bt="link" data-bg="commodity.html"><span class="bn">4</span><div class="bt"><span class="bfrom">商品复盘</span>碳酸锂：4 项客观读数同时处于极值</div><div class="bw">MA 组合判定为下行；250 期分位 0%（偏低）；近 5 期 -12.63%；跌破60期低点。仅描述已发生的价格位置，不含方向预测与仓位建议。</div><span class="bgo">点回证据 →</span></div></div><div class="bf">结论只描述已发生的事实与客观读数，汇总自 板块异动、ETF 资金、板块雷达、商品复盘；不含方向预测、不含仓位建议，不假设任何持仓。</div></div>
 <div class="mkt"><div class="ix"><span class="n">上证指数</span><b class="up">3,476.88</b><span class="p up">+0.01%</span></div><div class="ix"><span class="n">深证成指</span><b class="dn">10,084.04</b><span class="p dn">-0.02%</span></div><div class="ix"><span class="n">创业板指</span><b class="up">2,189.82</b><span class="p up">+0.29%</span></div><div class="ix"><span class="n">沪深300</span><b class="up">3,900.55</b><span class="p up">+0.06%</span></div><div class="ix"><span class="n">两市成交</span><b>0.95 万亿</b><span class="p dn">-22.7%</span></div><div class="ix"><span class="n">涨/跌</span><b><span class="up">1721</span> / <span class="dn">3500</span></b><span class="p">涨停 67</span></div></div>
+<div class="panel val-panel"><h3>主要指数估值 <span class="tag">近10年历史分位 · 数据日 11-26 · 官方口径 · 不含方向判断</span></h3><div class="vhead"><span>指数</span><span>PE-TTM / 分位</span><span>PB / 分位</span></div><div class="vbody"><div class="vrow"><div class="vname">上证50<em>大盘</em></div><div class="vcell"><b class="vnum">12.0</b><span class="vp"><i style="width:91.1%;background:#dc2626"></i></span><b class="vpc" style="color:#dc2626">91.1%</b></div><div class="vcell"><b class="vnum">1.25</b><span class="vp"><i style="width:58.2%;background:#ca8a04"></i></span><b class="vpc" style="color:#ca8a04">58.2%</b></div></div><div class="vrow"><div class="vname">上证指数<em>大盘</em></div><div class="vcell"><b class="vnum">15.47</b><span class="vp"><i style="width:70.9%;background:#ea580c"></i></span><b class="vpc" style="color:#ea580c">70.9%</b></div><div class="vcell"><b class="vnum">1.35</b><span class="vp"><i style="width:34.8%;background:#65a30d"></i></span><b class="vpc" style="color:#65a30d">34.8%</b></div></div><div class="vrow"><div class="vname">沪深300<em>大盘</em></div><div class="vcell"><b class="vnum">13.42</b><span class="vp"><i style="width:64.3%;background:#ea580c"></i></span><b class="vpc" style="color:#ea580c">64.3%</b></div><div class="vcell"><b class="vnum">1.32</b><span class="vp"><i style="width:18.4%;background:#15803d"></i></span><b class="vpc" style="color:#15803d">18.4%</b></div></div><div class="vrow"><div class="vname">中证500<em>中盘</em></div><div class="vcell"><b class="vnum">25.14</b><span class="vp"><i style="width:46.0%;background:#ca8a04"></i></span><b class="vpc" style="color:#ca8a04">46.0%</b></div><div class="vcell"><b class="vnum">1.84</b><span class="vp"><i style="width:41.7%;background:#ca8a04"></i></span><b class="vpc" style="color:#ca8a04">41.7%</b></div></div><div class="vrow"><div class="vname">中证1000<em>小盘</em></div><div class="vcell"><b class="vnum">33.11</b><span class="vp"><i style="width:26.2%;background:#65a30d"></i></span><b class="vpc" style="color:#65a30d">26.2%</b></div><div class="vcell"><b class="vnum">1.74</b><span class="vp"><i style="width:3.3%;background:#15803d"></i></span><b class="vpc" style="color:#15803d">3.3%</b></div></div><div class="vrow"><div class="vname">深证成指<em>综合</em></div><div class="vcell"><b class="vnum">22.75</b><span class="vp"><i style="width:18.6%;background:#15803d"></i></span><b class="vpc" style="color:#15803d">18.6%</b></div><div class="vcell"><b class="vnum">2.05</b><span class="vp"><i style="width:7.4%;background:#15803d"></i></span><b class="vpc" style="color:#15803d">7.4%</b></div></div><div class="vrow"><div class="vname">创业板指<em>成长</em></div><div class="vcell"><b class="vnum">24.72</b><span class="vp"><i style="width:1.8%;background:#15803d"></i></span><b class="vpc" style="color:#15803d">1.8%</b></div><div class="vcell"><b class="vnum">3.47</b><span class="vp"><i style="width:5.8%;background:#15803d"></i></span><b class="vpc" style="color:#15803d">5.8%</b></div></div></div><div class="vnote">分位=当前估值在近10年日度序列中的百分位（≤当前值占比）；分位越高越贵，越低越便宜；只报客观读数。数据源 index_dailybasic（官方口径），Tushare 走 tu.brze.top。</div></div>
 
 <div class="panel mover-panel">
   <div class="mover-line"><b>变化最大的板块</b>　板块等权涨幅 最强 <b>PCB +4.72%</b> · 最弱 <b>机器人 -3.22%</b> ｜ 相对全市场超额最高 <b>PCB +4.56%</b>。</div>
@@ -197,7 +218,7 @@ body{padding:12px 10px 34px}
 <div class="fh">免责声明</div>
 <span class="fz">本页全部数据来源于公开渠道并尽力核对，但不保证绝对完整与无误；如与交易所、指数编制机构或基金管理人正式披露不一致，一律以官方披露为准。所有分级、信号、筛选与主观判断，均为基于历史数据的统计规则或个人观点，不构成任何投资建议，不预测未来收益，也不代表任何产品的业绩承诺。使用者应独立判断并自行承担决策风险，据此操作，风险自担。</span>
 <div class="fh">作者信息</div>
-<span class="fz">作者：大S股市每日复盘　·　数据整理、制表与页面制作：本人独立完成　·　本页仅限内部研究使用，未经许可请勿转载或商用　·　页面更新于 2026-11-27 08:48</span>
+<span class="fz">作者：大S股市每日复盘　·　数据整理、制表与页面制作：本人独立完成　·　本页仅限内部研究使用，未经许可请勿转载或商用　·　页面更新于 2026-11-27 11:58</span>
 </footer>
 </div><script>window.addEventListener('load',function(){
   var es=document.querySelectorAll('#briefBox .bi');
