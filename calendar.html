@@ -115,6 +115,16 @@ h2 .cnt{font-weight:400;color:#a09b93;letter-spacing:0}
 .live-act{font-size:12.6px;margin-top:4px;line-height:1.5;color:#3a3733}
 .live-act strong{font-weight:700}
 .live-act.build strong{color:var(--build)}
+.evmeta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:5px}
+.cflag{font-size:10.5px;padding:1px 6px;border-radius:4px;font-weight:600}
+.cflag.fixed{background:#e7f5ee;color:#0c7a4d}
+.cflag.est{background:#fff4e0;color:#9a5b00}
+.cflag.dim{background:#f1efe9;color:#8a857d}
+.evsrc{font-size:11px;color:#8a857d}
+.sec{font-size:10.5px;color:#4f46e5;background:#eef2ff;border-radius:4px;padding:1px 6px}
+.osn{display:block;font-size:11px;color:#9a5b00;margin-top:4px}
+.evwatch,.evinv{font-size:11.8px;line-height:1.6;margin-top:5px;color:#5c574f}
+.evinv{color:#9a5b00}
 .live-act.defend strong{color:var(--defend)}
 .live-act.avoid strong{color:var(--avoid)}
 
@@ -337,7 +347,7 @@ document.addEventListener("DOMContentLoaded",function(){
 
 <script>
 const PAYLOAD = {};
-const BUILD = "2026-11-26 18:11";
+const BUILD = "2026-11-27 08:18";
 const ITER = PAYLOAD.iter || 150000;
 const LSKEY = "cal_lic_v1";
 const SAFE = !!(window.crypto && window.crypto.subtle && window.TextEncoder && window.atob && window.Promise);
@@ -456,6 +466,22 @@ function badge(t){
 }
 function stars(n){ return "★".repeat(parseInt(n || 1, 10)); }
 function kindOf(ev){ return KIND[ev.action_kind] || KIND.build; }
+
+/* 2026-11-27 首屏增强：日期类型 / 来源 / 影响板块 / 海外时间 */
+function confirmLabel(e){
+  const c = e.confirm || "";
+  if(c === "官方公告") return '<span class="cflag fixed">官方定档</span>';
+  if(c === "惯例推测") return '<span class="cflag est">预计窗口</span>';
+  if(c === "待定") return '<span class="cflag dim">待确认</span>';
+  return '<span class="cflag dim">' + esc(c || "待确认") + '</span>';
+}
+function overseasNote(e){
+  const type = String(e.type || "");
+  if(!/海外|美股|境外|国外/.test(type)) return "";
+  const s = D(e.date_start);
+  const bj = s ? (s.getMonth()+1) + "/" + pad(s.getDate()) : "待定";
+  return '<span class="osn">海外事件：北京时间 ' + bj + ' · A股首个可观察交易日为 T 日或次一交易日（以开盘为准）</span>';
+}
 
 function vbadge(ev){
   const v = ev.evidence && ev.evidence.verdict;
@@ -670,16 +696,22 @@ function sectionLive(evs){
     if(t === null) return false;
     if(t >= 0 && t <= 7) return true;
     return t > 7 && t <= parseInt(e.entry_window || 7, 10) + 7;
-  });
-  if(!rows.length) return '<section><h2>窗口内</h2><div class="empty">当前无事件在窗口内</div></section>';
+  }).sort((a,b) => (tOf(a)??99) - (tOf(b)??99));
+  if(!rows.length) return '<section><h2>今日与近期重点</h2><div class="empty">当前无事件在窗口内</div></section>';
   const body = rows.map(e => {
     const t = tOf(e), k = kindOf(e);
+    const sectors = (e.sectors || []).slice(0,4).map(s => '<span class="sec">' + esc(s) + '</span>').join("");
+    const watch = e.watch ? '<div class="evwatch">市场在等：' + md2html(esc(e.watch)) + '</div>' : '';
+    const invalid = e.invalidate ? '<div class="evinv">证伪条件：' + md2html(esc(e.invalidate)) + '</div>' : '';
+    const src = e.evidence_src || e.confirm || "—";
     return '<div class="live-item">' + badge(t) +
       '<div class="live-main"><div class="live-name">' + esc(e.name) +
-      '<em>' + k.label + '型 · ' + stars(e.strength) + '</em>' + vbadge(e) + '</div>' +
+      '<em>' + k.label + ' · ' + stars(e.strength) + '</em>' + vbadge(e) + '</div>' +
+      '<div class="evmeta">' + confirmLabel(e) + '<span class="evsrc">来源：' + esc(src) + '</span>' + sectors + '</div>' +
+      overseasNote(e) + watch + invalid +
       '<div class="live-act ' + k.cls + '">' + md2html(esc(action(e, t))) + '</div></div></div>';
   }).join("");
-  return '<section><h2>窗口内 <span class="cnt">' + rows.length + ' 个</span></h2><div class="live">' + body + '</div></section>';
+  return '<section><h2>今日与近期重点 <span class="cnt">' + rows.length + ' 个 · 日期类型 / 来源 / 影响板块 / 市场在等什么</span></h2><div class="live">' + body + '</div></section>';
 }
 
 function tlCard(e){
@@ -791,9 +823,8 @@ function sectionReview(evs){
   // 按事件发生日倒序（不是按复盘填写日）：读者要看「最近发生的事件结果如何」，
   // 按填写日排会让同一批补写的旧事件靠前（GTC 柏林 10/20 就排到了第一个）
   const done = evs.filter(e => e.review).sort((a, b) => String(b.date_start).localeCompare(String(a.date_start)));
-  const pend = evs.filter(e => { const t = tOf(e); return t !== null && t >= -7 && t < 0 && !e.review; });
-  let h = '<section><h2>复盘</h2>';
-  if(pend.length) h += '<div class="empty" style="text-align:left;margin-bottom:10px">待打分：' + pend.map(e => '<b>' + esc(e.name) + '</b>（过期 ' + Math.abs(tOf(e)) + ' 天）').join("、") + '</div>';
+  // 2026-11-27：去掉独立「待打分 / 逾期未复盘」清单；复盘状态随事件保留在本区，不再单列焦虑清单。
+  let h = '<section><h2>复盘 <span class="cnt">历史事件的复盘记录 · 状态随事件保留</span></h2>';
   if(!done.length) return h + '<div class="empty">暂无复盘记录</div></section>';
   const LIMIT = 3;
   const show = done.slice(0, LIMIT), rest = done.slice(LIMIT);
